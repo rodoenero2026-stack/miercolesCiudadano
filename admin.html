@@ -1,0 +1,3189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Panel de Administración - Miércoles Ciudadano, San Fernando, Chiapas. Gestión de audiencias, citas y estadísticas.">
+  <title>Panel de Administración | Miércoles Ciudadano</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- jsPDF and jsPDF-AutoTable CDN for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+  
+  <style>
+    /* VARIABLES DE DISEÑO (Verde y Dorado - Chiapas) */
+    :root {
+      --primary: #0F4C3A;         /* Verde Chiapas Profundo */
+      --primary-light: #186E55;   /* Verde Vibrante */
+      --primary-dark: #072C21;    /* Verde Oscuro */
+      --secondary: #B99326;       /* Dorado Chiapas */
+      --secondary-light: #D4AF37; /* Dorado Brillante */
+      --secondary-dark: #8F6F1A;  /* Dorado Mate */
+      --accent: #E5C158;          /* Oro claro */
+      --text: #2D3748;            /* Gris Oscuro Text */
+      --text-muted: #718096;      /* Gris Medio */
+      --bg-body: #F7FAFC;         /* Fondo General */
+      --bg-white: #FFFFFF;        /* Fondo Contenedores */
+      --bg-gold-light: #FDF9EE;   /* Fondo Dorado Suave */
+      --border-color: #E2E8F0;    /* Bordes */
+      
+      --success: #38A169;
+      --success-light: #E6FFFA;
+      --error: #E53E3E;
+      --error-light: #FFF5F5;
+      --warning: #DD6B20;
+      --warning-light: #FFFAF0;
+      --info: #3182CE;
+      
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --max-width: 1280px;
+    }
+
+    /* ESTILOS GLOBALES */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+    }
+
+    /* BOTONES */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.6rem 1.2rem;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      gap: 0.5rem;
+      outline: none;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .btn-sm {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.75rem;
+      border-radius: 4px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: var(--bg-white);
+      box-shadow: 0 2px 6px rgba(15, 76, 58, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(15, 76, 58, 0.3);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+      color: var(--primary-dark);
+      box-shadow: 0 2px 6px rgba(185, 147, 38, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, var(--secondary-light) 0%, var(--secondary-dark) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(185, 147, 38, 0.3);
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: var(--bg-white);
+    }
+
+    .btn-success:hover {
+      background-color: #2f855a;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background-color: var(--error);
+      color: var(--bg-white);
+    }
+
+    .btn-danger:hover {
+      background-color: #c53030;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-outline:hover {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      transform: translateY(-1px);
+    }
+
+    .btn-muted {
+      background-color: #E2E8F0;
+      color: var(--text);
+    }
+
+    .btn-muted:hover {
+      background-color: #CBD5E0;
+    }
+
+    .btn:disabled {
+      background: #E2E8F0 !important;
+      color: #A0AEC0 !important;
+      cursor: not-allowed;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.6rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-pendiente {
+      background-color: var(--warning-light);
+      color: var(--warning);
+      border: 1px solid rgba(221, 107, 32, 0.2);
+    }
+
+    .badge-confirmada {
+      background-color: var(--success-light);
+      color: var(--success);
+      border: 1px solid rgba(56, 161, 105, 0.2);
+    }
+
+    .badge-cancelada {
+      background-color: var(--error-light);
+      color: var(--error);
+      border: 1px solid rgba(229, 62, 98, 0.2);
+    }
+
+    /* VISTA DE LOGIN */
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .login-card {
+      background-color: var(--bg-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      width: 100%;
+      max-width: 450px;
+      overflow: hidden;
+      border-top: 5px solid var(--secondary);
+      animation: fadeInUp 0.5s ease-out;
+    }
+
+    .login-header {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      padding: 2.5rem 2rem 2rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .login-logo {
+      width: 65px;
+      height: 65px;
+      background-color: var(--bg-white);
+      border-radius: 50%;
+      margin: 0 auto 1rem auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid var(--secondary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .login-logo svg {
+      width: 35px;
+      height: 35px;
+      fill: var(--primary);
+    }
+
+    .login-header h2 {
+      color: var(--bg-white);
+      font-size: 1.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .login-header p {
+      color: var(--accent);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+
+    .login-body {
+      padding: 2.5rem 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--primary-dark);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper svg {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      fill: var(--text-muted);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.7rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      transition: var(--transition);
+      background-color: #F8FAFC;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      background-color: var(--bg-white);
+      box-shadow: 0 0 0 3px rgba(15, 76, 58, 0.15);
+      outline: none;
+    }
+
+    .login-btn {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.85rem;
+      font-size: 1rem;
+    }
+
+    .login-footer {
+      text-align: center;
+      padding: 1.5rem;
+      background-color: #F8FAFC;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* HEADER PRINCIPAL */
+    .main-header {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      border-bottom: 4px solid var(--secondary);
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      box-shadow: var(--shadow-md);
+    }
+
+    .header-container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0.8rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      background-color: var(--bg-white);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--secondary);
+    }
+
+    .logo svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--primary);
+    }
+
+    .brand-text h1 {
+      color: var(--bg-white);
+      font-size: 1.15rem;
+      line-height: 1.2;
+    }
+
+    .brand-text span {
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      display: block;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      background-color: var(--secondary);
+      color: var(--primary-dark);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .username {
+      font-weight: 600;
+      color: var(--bg-white);
+    }
+
+    /* BARRA DE NAVEGACIÓN SECUNDARIA (PANELES) */
+    .nav-tabs {
+      background-color: var(--bg-white);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tabs-container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none; /* Firefox */
+    }
+
+    .tabs-container::-webkit-scrollbar {
+      display: none; /* Safari/Chrome */
+    }
+
+    .tab-btn {
+      padding: 1rem 1.5rem;
+      background: none;
+      border: none;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 3px solid transparent;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .tab-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+    }
+
+    .tab-btn:hover svg {
+      fill: var(--primary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-btn.active svg {
+      fill: var(--primary);
+    }
+
+    /* CONTENEDOR PRINCIPAL */
+    .main-content {
+      flex: 1;
+      max-width: var(--max-width);
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* ALERTAS DE MENSAGENS */
+    .alert-container {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-width: 400px;
+      width: calc(100% - 3rem);
+    }
+
+    .alert {
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-md);
+      color: var(--text);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      animation: slideInRight 0.3s ease-out;
+      border-left: 5px solid transparent;
+      background-color: var(--bg-white);
+    }
+
+    .alert-success {
+      border-left-color: var(--success);
+      background-color: var(--success-light);
+    }
+
+    .alert-error {
+      border-left-color: var(--error);
+      background-color: var(--error-light);
+    }
+
+    .alert-warning {
+      border-left-color: var(--warning);
+      background-color: var(--warning-light);
+    }
+
+    .alert svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .alert-success svg { fill: var(--success); }
+    .alert-error svg { fill: var(--error); }
+    .alert-warning svg { fill: var(--warning); }
+
+    .alert-content {
+      flex: 1;
+      font-size: 0.85rem;
+    }
+
+    .alert-title {
+      font-weight: 700;
+      margin-bottom: 0.15rem;
+    }
+
+    .alert-close {
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 0;
+    }
+
+    /* SECCION ESTADISTICAS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background-color: var(--bg-white);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border-left: 4px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-card:nth-child(2) { border-left-color: var(--secondary); }
+    .stat-card:nth-child(3) { border-left-color: var(--success); }
+    .stat-card:nth-child(4) { border-left-color: var(--error); }
+
+    .stat-info h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      line-height: 1;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #F0FDF4;
+    }
+
+    .stat-card:nth-child(1) .stat-icon { background-color: rgba(15, 76, 58, 0.08); }
+    .stat-card:nth-child(2) .stat-icon { background-color: rgba(185, 147, 38, 0.08); }
+    .stat-card:nth-child(3) .stat-icon { background-color: rgba(56, 161, 105, 0.08); }
+    .stat-card:nth-child(4) .stat-icon { background-color: rgba(229, 62, 62, 0.08); }
+
+    .stat-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .stat-card:nth-child(1) .stat-icon svg { fill: var(--primary); }
+    .stat-card:nth-child(2) .stat-icon svg { fill: var(--secondary); }
+    .stat-card:nth-child(3) .stat-icon svg { fill: var(--success); }
+    .stat-card:nth-child(4) .stat-icon svg { fill: var(--error); }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-card {
+      background-color: var(--bg-white);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .chart-card h3 {
+      font-size: 1rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 2px solid var(--bg-gold-light);
+      padding-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .chart-card h3 svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--primary);
+    }
+
+    /* Gráficos en puro CSS/SVG */
+    .bar-chart-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .bar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .bar-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .bar-track {
+      background-color: #EDF2F7;
+      height: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+      height: 100%;
+      border-radius: 10px;
+      width: 0%;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .donut-chart-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .donut-svg-wrapper {
+      position: relative;
+      width: 150px;
+      height: 150px;
+    }
+
+    .donut-chart {
+      transform: rotate(-90deg);
+    }
+
+    .donut-ring {
+      fill: transparent;
+      stroke: #EDF2F7;
+      stroke-width: 4;
+    }
+
+    .donut-segment {
+      fill: transparent;
+      stroke-width: 4;
+      stroke-linecap: round;
+      transition: stroke-dasharray 0.5s ease;
+    }
+
+    .donut-segment-1 { stroke: var(--success); }
+    .donut-segment-2 { stroke: var(--warning); }
+    .donut-segment-3 { stroke: var(--error); }
+
+    .donut-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .donut-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      line-height: 1;
+    }
+
+    .donut-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    .legend-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .legend-dot-confirmada { background-color: var(--success); }
+    .legend-dot-pendiente { background-color: var(--warning); }
+    .legend-dot-cancelada { background-color: var(--error); }
+
+    /* SECCIÓN DE FILTROS */
+    .filters-card {
+      background-color: var(--bg-white);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+    }
+
+    .filters-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .filters-title svg {
+      width: 16px;
+      height: 16px;
+      fill: var(--primary);
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .filter-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .filter-control {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      background-color: #F8FAFC;
+      transition: var(--transition);
+    }
+
+    .filter-control:focus {
+      border-color: var(--primary);
+      background-color: var(--bg-white);
+      outline: none;
+    }
+
+    /* VISTA DE CALENDARIO SEMANAL / TIMELINE DE MIERCOLES */
+    .calendar-wrapper {
+      background-color: var(--bg-white);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .calendar-header {
+      background-color: var(--bg-gold-light);
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .calendar-current-day {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      text-align: center;
+      min-width: 250px;
+    }
+
+    .nav-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      border-color: var(--primary);
+    }
+
+    .nav-btn:hover:not(:disabled) svg {
+      fill: var(--bg-white);
+    }
+
+    .nav-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: var(--text);
+    }
+
+    .calendar-view-toggle {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .timeline-container {
+      padding: 1.5rem;
+    }
+
+    .timeline-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      background-color: var(--bg-white);
+      transition: var(--transition);
+    }
+
+    .timeline-row:hover {
+      box-shadow: var(--shadow-sm);
+      border-color: #CBD5E0;
+    }
+
+    .timeline-time {
+      background-color: #F8FAFC;
+      border-right: 1px solid var(--border-color);
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .timeline-content {
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .slot-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .slot-empty::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--border-color);
+    }
+
+    .slot-booked {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .citizen-brief {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .citizen-name-folio {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .citizen-name {
+      font-weight: 700;
+      color: var(--primary-dark);
+      font-size: 0.95rem;
+    }
+
+    .citizen-folio {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.75rem;
+      background-color: var(--bg-gold-light);
+      color: var(--secondary-dark);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 700;
+      border: 1px solid rgba(185, 147, 38, 0.2);
+    }
+
+    .citizen-details {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .citizen-details span {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .citizen-details svg {
+      width: 14px;
+      height: 14px;
+      fill: var(--text-muted);
+    }
+
+    .citizen-motivo {
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+      background-color: #F7FAFC;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary-light);
+    }
+
+    .citizen-notes {
+      font-size: 0.8rem;
+      color: var(--text);
+      background-color: #FFFDF5;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--secondary);
+      margin-top: 0.25rem;
+      font-style: italic;
+    }
+
+    .actions-cell {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* VISTA DE LISTADO / TABLAS */
+    .table-container {
+      background-color: var(--bg-white);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .table th {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      padding: 0.85rem 1rem;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    .table tbody tr:hover {
+      background-color: #F8FAFC;
+    }
+
+    .table-citizen-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .table-citizen-name {
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .table-citizen-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table-notes-container {
+      max-width: 220px;
+      white-space: normal;
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+
+    .table-notes-box {
+      font-style: italic;
+      background-color: var(--bg-gold-light);
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      border-left: 2px solid var(--secondary);
+    }
+
+    .table-empty {
+      text-align: center;
+      padding: 3rem !important;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: var(--bg-white);
+      border-top: 1px solid var(--border-color);
+      border-radius: 0 0 var(--radius-md) var(--radius-md);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* MODALES DE DIÁLOGO */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(7, 44, 33, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background-color: var(--bg-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      width: 100%;
+      max-width: 550px;
+      overflow: hidden;
+      animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-top: 4px solid var(--secondary);
+    }
+
+    .modal-header {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      color: var(--bg-white);
+      font-size: 1.1rem;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: var(--bg-white);
+      opacity: 0.8;
+      cursor: pointer;
+      font-size: 1.5rem;
+      transition: var(--transition);
+      line-height: 1;
+    }
+
+    .modal-close-btn:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      background-color: #F8FAFC;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* REAGENDAR MODAL ESPECÍFICO */
+    .slot-selection-container {
+      margin-top: 1.25rem;
+    }
+
+    .slot-selection-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--primary-dark);
+    }
+
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.5rem;
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.75rem;
+      background-color: #F8FAFC;
+    }
+
+    .modal-slot-btn {
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background-color: var(--bg-white);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .modal-slot-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
+      background-color: rgba(15, 76, 58, 0.05);
+    }
+
+    .modal-slot-btn.selected {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      border-color: var(--primary);
+    }
+
+    .modal-slot-btn:disabled {
+      background-color: #E2E8F0;
+      color: #A0AEC0;
+      cursor: not-allowed;
+      border-color: #E2E8F0;
+    }
+
+    /* FOOTER */
+    .footer {
+      background-color: var(--primary-dark);
+      color: #E2E8F0;
+      text-align: center;
+      padding: 1.5rem;
+      border-top: 3px solid var(--secondary);
+      font-size: 0.8rem;
+      margin-top: 2rem;
+    }
+
+    .footer p {
+      margin-bottom: 0.25rem;
+    }
+
+    .footer strong {
+      color: var(--accent);
+    }
+
+    /* ANIMACIONES */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes zoomIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+      }
+      to {
+        transform: translateX(0);
+      }
+    }
+
+    /* VISTA DE CERRAR SESION / CARGANDO */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.8);
+      z-index: 1500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(15, 76, 58, 0.1);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* RESPONSIVIDAD GENERAL */
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .user-menu {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .timeline-row {
+        grid-template-columns: 1fr;
+      }
+      .timeline-time {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.5rem;
+      }
+      .actions-cell {
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+      .actions-cell button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p style="font-weight: 600; color: var(--primary-dark);">Procesando solicitud...</p>
+  </div>
+
+  <!-- CONTAINER DE ALERTAS -->
+  <div id="alertContainer" class="alert-container"></div>
+
+  <!-- VISTA DE LOGIN -->
+  <div id="loginView" class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </div>
+        <h2>Miércoles Ciudadano</h2>
+        <p>Panel de Administración</p>
+      </div>
+      <div class="login-body">
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="usernameInput">Usuario</label>
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+              </svg>
+              <input type="text" id="usernameInput" class="form-control" placeholder="Ingrese su usuario (ej. admin)" required value="admin">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="passwordInput">Contraseña</label>
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+              </svg>
+              <input type="password" id="passwordInput" class="form-control" placeholder="Contraseña de administrador" required autocomplete="current-password">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary login-btn">
+            Iniciar Sesión
+          </button>
+          <div style="text-align: center; margin-top: 1rem;">
+            <a href="/index.html" style="color: var(--primary-light); font-size: 0.85rem; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+              ← Volver al Portal de Citas
+            </a>
+          </div>
+        </form>
+      </div>
+      <div class="login-footer">
+        H. Ayuntamiento de San Fernando, Chiapas &copy; 2026
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERFAZ ADMINISTRATIVA (OCULTA POR DEFECTO) -->
+  <div id="adminApp" style="display: none; flex-direction: column; min-height: 100vh;">
+    
+    <!-- HEADER -->
+    <header class="main-header">
+      <div class="header-container">
+        <div class="brand">
+          <div class="logo">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <h1>Miércoles Ciudadano</h1>
+            <span>Panel de Control de Audiencias</span>
+          </div>
+        </div>
+        <div class="user-menu">
+          <div class="user-info">
+            <div class="avatar" id="userAvatar">A</div>
+            <div class="username" id="userDisplay">Administrador</div>
+          </div>
+          <a href="/index.html" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.4); color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 600;">
+            Sitio Público
+          </a>
+          <button onclick="handleLogout()" class="btn btn-sm btn-outline" style="border-color: var(--accent); color: var(--accent);">
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- NAVEGACION DE PANELES -->
+    <nav class="nav-tabs">
+      <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab('calendarTab')">
+          <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+          Calendario Semanal
+        </button>
+        <button class="tab-btn" onclick="switchTab('listTab')">
+          <svg viewBox="0 0 24 24"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg>
+          Listado de Citas
+        </button>
+        <button class="tab-btn" onclick="switchTab('statsTab')">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+          Estadísticas y Reportes
+        </button>
+        <button class="tab-btn" onclick="switchTab('blockedTab')">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          Fechas Bloqueadas
+        </button>
+      </div>
+    </nav>
+
+    <!-- CUERPO PRINCIPAL -->
+    <main class="main-content">
+      
+      <!-- TAB 1: CALENDARIO SEMANAL -->
+      <section id="calendarTab" class="tab-panel active">
+        <div class="calendar-wrapper">
+          <div class="calendar-header">
+            <div class="calendar-nav">
+              <button onclick="navigateWednesday(-1)" class="nav-btn" title="Anterior Miércoles">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+              </button>
+              <div id="currentWednesdayLabel" class="calendar-current-day">Cargando fecha...</div>
+              <button onclick="navigateWednesday(1)" class="nav-btn" title="Siguiente Miércoles">
+                <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+              </button>
+              <button onclick="setTodayWednesday()" class="btn btn-sm btn-outline" style="margin-left: 0.5rem;">
+                Hoy
+              </button>
+            </div>
+            
+            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+              <div style="font-size: 0.85rem; font-weight: 600; color: var(--primary);">
+                Total Citas Agendadas: <span id="wednesdayCountBadge" class="badge badge-confirmada" style="padding: 0.15rem 0.5rem;">0 / 15</span>
+              </div>
+              <button onclick="exportWednesdayPDF()" class="btn btn-sm btn-secondary" id="exportPdfBtn" disabled>
+                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: var(--primary-dark);"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/></svg>
+                Imprimir Lista (PDF)
+              </button>
+            </div>
+          </div>
+          
+          <div class="timeline-container">
+            <div id="timelineList" class="timeline-grid">
+              <!-- Cargado dinámicamente con JavaScript -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: LISTADO DE CITAS -->
+      <section id="listTab" class="tab-panel">
+        
+        <!-- CARD DE FILTROS -->
+        <div class="filters-card">
+          <div class="filters-title">
+            <svg viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+            Filtros de Búsqueda
+          </div>
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label for="searchFilter">Búsqueda General</label>
+              <input type="text" id="searchFilter" class="filter-control" placeholder="Buscar por Folio o Ciudadano..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+              <label for="dateFilter">Fecha (Miércoles)</label>
+              <select id="dateFilter" class="filter-control" onchange="applyFilters()">
+                <option value="">Todos los miércoles</option>
+                <!-- Se poblará con las fechas de miércoles disponibles -->
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="statusFilter">Estado de la Cita</label>
+              <select id="statusFilter" class="filter-control" onchange="applyFilters()">
+                <option value="">Todos los estados</option>
+                <option value="pendiente">Pendientes</option>
+                <option value="confirmada">Confirmadas</option>
+                <option value="cancelada">Canceladas</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="motivoFilter">Motivo / Tema</label>
+              <input type="text" id="motivoFilter" class="filter-control" placeholder="Ej. Agua, Pavimentación..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+              <button onclick="clearFilters()" class="btn btn-outline" style="width: 100%; justify-content: center; height: 35px; padding: 0;">
+                Limpiar Filtros
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLA DE CITAS -->
+        <div class="table-container">
+          <table class="table" id="appointmentsTable">
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Fecha</th>
+                <th>Horario</th>
+                <th>Ciudadano</th>
+                <th>Teléfono / Colonia</th>
+                <th>Motivo / Solicitud</th>
+                <th>Notas del Administrador</th>
+                <th>Estado</th>
+                <th style="text-align: center;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Cargado dinámicamente con JavaScript -->
+            </tbody>
+          </table>
+          <div class="pagination-bar">
+            <div>Mostrando <span id="pagShowing">0</span> de <span id="pagTotal">0</span> registros filtrados</div>
+            <div style="display: flex; gap: 0.5rem;">
+              <!-- Paginación básica -->
+              <button id="btnPrevPage" class="btn btn-sm btn-outline" disabled onclick="changePage(-1)">Anterior</button>
+              <button id="btnNextPage" class="btn btn-sm btn-outline" disabled onclick="changePage(1)">Siguiente</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: ESTADÍSTICAS Y REPORTES -->
+      <section id="statsTab" class="tab-panel">
+        
+        <!-- GRID DE CARDS ESTADÍSTICAS -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-info">
+              <h3>Citas Totales (Histórico)</h3>
+              <div class="stat-value" id="statTotalCitas">0</div>
+            </div>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0-2-.9-2-2V4c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-info">
+              <h3>Citas Este Mes</h3>
+              <div class="stat-value" id="statCitasMes">0</div>
+            </div>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 11h5v5H9z"/></svg>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-info">
+              <h3>Atendidas / Confirmadas</h3>
+              <div class="stat-value" id="statCitasConfirmadas" style="color: var(--success);">0</div>
+            </div>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-info">
+              <h3>Citas Pendientes</h3>
+              <div class="stat-value" id="statCitasPendientes" style="color: var(--warning);">0</div>
+            </div>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <!-- GRAFICO 1: TEMAS MÁS FRECUENTES -->
+          <div class="chart-card">
+            <h3>
+              <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+              Temas / Motivos de Audiencia Más Frecuentes
+            </h3>
+            <div id="reasonsChartList" class="bar-chart-container">
+              <!-- Poblar con barras dinámicas -->
+            </div>
+          </div>
+
+          <!-- GRAFICO 2: DISTRIBUCION POR ESTADOS -->
+          <div class="chart-card">
+            <h3>
+              <svg viewBox="0 0 24 24"><path d="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"/></svg>
+              Distribución de Estados de Citas
+            </h3>
+            <div class="donut-chart-container">
+              <div class="donut-svg-wrapper">
+                <svg width="150" height="150" viewBox="0 0 36 36" class="donut-chart">
+                  <circle class="donut-ring" cx="18" cy="18" r="15.91549430918954"></circle>
+                  <circle id="donutSegmentConfirmada" class="donut-segment donut-segment-1" cx="18" cy="18" r="15.91549430918954" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                  <circle id="donutSegmentPendiente" class="donut-segment donut-segment-2" cx="18" cy="18" r="15.91549430918954" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                  <circle id="donutSegmentCancelada" class="donut-segment donut-segment-3" cx="18" cy="18" r="15.91549430918954" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                </svg>
+                <div class="donut-text">
+                  <div class="donut-number" id="donutTotalText">0</div>
+                  <div class="donut-label">Citas</div>
+                </div>
+              </div>
+              <div class="legend-list">
+                <div class="legend-item">
+                  <div class="legend-dot legend-dot-confirmada"></div>
+                  <span>Confirmadas: <strong id="legendConfirmadaVal">0%</strong></span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot legend-dot-pendiente"></div>
+                  <span>Pendientes: <strong id="legendPendienteVal">0%</strong></span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot legend-dot-cancelada"></div>
+                  <span>Canceladas: <strong id="legendCanceladaVal">0%</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-grid" style="margin-top: 1.5rem;">
+          <!-- COLONIAS CON MÁS SOLICITUDES -->
+          <div class="chart-card" style="grid-column: 1 / -1;">
+            <h3>
+              <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+              Colonias de San Fernando con Mayor Registro de Citas
+            </h3>
+            <div id="coloniasChartList" class="bar-chart-container">
+              <!-- Poblar con colonias dinámicas -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: FECHAS BLOQUEADAS -->
+      <section id="blockedTab" class="tab-panel">
+        <div style="background-color: var(--bg-white); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; color: var(--primary-dark);">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="color: var(--primary);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            Administrar Fechas Bloqueadas (Inhábiles)
+          </h2>
+          
+          <form id="blockedDateForm" onsubmit="handleBlockedDateSubmit(event)" style="background-color: var(--bg-gold-light); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(185, 147, 38, 0.2); margin-bottom: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+            <div class="filter-group" style="margin-bottom: 0;">
+              <label for="blockedDateInput" style="font-weight: 600; margin-bottom: 0.25rem; display: block; font-size: 0.85rem; color: var(--primary-dark);">Seleccionar Miércoles</label>
+              <input type="date" id="blockedDateInput" class="filter-control" required style="width: 100%; height: 38px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); padding: 0.5rem; font-family: inherit;">
+            </div>
+            <div class="filter-group" style="margin-bottom: 0;">
+              <label for="blockedReason" style="font-weight: 600; margin-bottom: 0.25rem; display: block; font-size: 0.85rem; color: var(--primary-dark);">Motivo del Bloqueo</label>
+              <input type="text" id="blockedReason" class="filter-control" placeholder="Ej. Día festivo, Compromiso oficial..." required style="width: 100%; height: 38px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); padding: 0.5rem; font-family: inherit;">
+            </div>
+            <div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; height: 38px; justify-content: center; font-family: inherit;">
+                Bloquear Fecha
+              </button>
+            </div>
+          </form>
+
+          <div class="table-container" style="box-shadow: none; border: 1px solid var(--border-color); margin-top: 1rem;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Día de la Semana</th>
+                  <th>Motivo / Razón</th>
+                  <th style="text-align: center; width: 120px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="blockedDatesTableBody">
+                <!-- Se poblará dinámicamente con JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER PRINCIPAL -->
+    <footer class="footer">
+      <p><strong>H. Ayuntamiento de San Fernando, Chiapas</strong></p>
+      <p>Ayuntamiento Municipal: Calle Central Oriente #1, Col. Centro, San Fernando, Chiapas</p>
+      <p>&copy; 2026 - Todos los derechos reservados. Sistema Miércoles Ciudadano.</p>
+    <p>Desarrollo by Rodo</p>
+    </footer>
+  </div>
+
+  <!-- MODAL: EDITAR ESTADO / NOTAS -->
+  <div id="editModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="editModalTitle">Administrar Cita</h3>
+        <button onclick="closeModal('editModal')" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" id="editCitaId">
+          
+          <div style="background-color: var(--bg-gold-light); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(185, 147, 38, 0.2); margin-bottom: 1.25rem;">
+            <p style="font-size: 0.85rem; font-weight: 700; color: var(--primary-dark);" id="editCitizenName"></p>
+            <p style="font-size: 0.8rem; color: var(--text-muted);" id="editCitizenDetails"></p>
+            <p style="font-size: 0.85rem; margin-top: 0.5rem; border-top: 1px solid var(--border-color); padding-top: 0.5rem;">
+              <strong>Folio:</strong> <span id="editCitaFolio"></span> | 
+              <strong>Horario:</strong> <span id="editCitaFechaHora"></span>
+            </p>
+            <p style="font-size: 0.85rem; margin-top: 0.25rem;">
+              <strong>Motivo:</strong> <span id="editCitaMotivo"></span>
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="editEstado">Estado de la Cita</label>
+            <select id="editEstado" class="filter-control">
+              <option value="pendiente">Pendiente</option>
+              <option value="confirmada">Confirmada</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editNotasAdmin">Notas del Administrador / Observaciones</label>
+            <textarea id="editNotasAdmin" class="filter-control" rows="4" placeholder="Escriba aquí observaciones pertinentes, indicaciones para el ciudadano o anotaciones internas..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('editModal')" class="btn btn-muted">Cancelar</button>
+        <button onclick="saveCitaEstado()" class="btn btn-primary">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REAGENDAR CITA -->
+  <div id="rescheduleModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Reagendar Cita / Cambiar Horario</h3>
+        <button onclick="closeModal('rescheduleModal')" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="rescheduleForm">
+          <input type="hidden" id="rescheduleCitaId">
+          
+          <div style="background-color: var(--bg-gold-light); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(185, 147, 38, 0.2); margin-bottom: 1.25rem;">
+            <p style="font-size: 0.85rem; font-weight: 700; color: var(--primary-dark);" id="rescheduleCitizenName"></p>
+            <p style="font-size: 0.85rem;">
+              <strong>Cita Actual:</strong> <span id="rescheduleCitaActual"></span>
+            </p>
+          </div>
+
+          <!-- Seleccionar Fecha -->
+          <div class="form-group">
+            <label for="rescheduleFecha">Nueva Fecha (Miércoles)</label>
+            <input type="date" id="rescheduleFecha" class="filter-control" onchange="loadAvailableSlotsForReschedule()" required>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Las citas solo pueden agendarse los días miércoles.</small>
+          </div>
+
+          <!-- Seleccionar Horario -->
+          <div class="slot-selection-container">
+            <div class="slot-selection-title">Seleccione Nuevo Horario Disponible</div>
+            <div id="rescheduleSlotsList" class="slot-grid">
+              <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.8rem;">
+                Seleccione una fecha de miércoles primero...
+              </div>
+            </div>
+            <input type="hidden" id="selectedRescheduleSlot">
+          </div>
+
+          <!-- Notas Adicionales -->
+          <div class="form-group" style="margin-top: 1.25rem;">
+            <label for="rescheduleNotas">Notas de Reagendamiento</label>
+            <textarea id="rescheduleNotas" class="filter-control" rows="3" placeholder="Motivo de la reprogramación o comentarios..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('rescheduleModal')" class="btn btn-muted">Cancelar</button>
+        <button onclick="saveCitaReschedule()" class="btn btn-secondary">Confirmar Reagendamiento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTING PRINCIPAL -->
+  <script>
+    // Variables globales de la App
+    let allAppointments = [];      // Lista completa de citas del backend
+    let filteredAppointments = []; // Lista filtrada según criterios
+    let currentWednesday = null;   // Objeto Date que representa el miércoles actualmente seleccionado
+    let apiToken = "";             // Token JWT para autorizar consultas
+    
+    // Paginación
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    // Horarios oficiales del Miércoles Ciudadano (coinciden con index.html)
+    const TIME_SLOTS = [
+      "08:00 - 08:20", "08:20 - 08:40", "08:40 - 09:00",
+      "09:00 - 09:20", "09:20 - 09:40", "09:40 - 10:00",
+      "10:00 - 10:20", "10:20 - 10:40", "10:40 - 11:00",
+      "11:00 - 11:20", "11:20 - 11:40", "11:40 - 12:00",
+      "12:00 - 12:20", "12:20 - 12:40", "12:40 - 13:00",
+      "13:00 - 13:20", "13:20 - 13:40", "13:40 - 14:00",
+      "14:00 - 14:20", "14:20 - 14:40", "14:40 - 15:00"
+    ];
+
+    // Al iniciar la carga
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Revisar si hay sesión guardada
+      const savedToken = localStorage.getItem('adminToken');
+      if (savedToken) {
+        apiToken = savedToken;
+        document.getElementById('loginView').style.display = 'none';
+        document.getElementById('adminApp').style.display = 'flex';
+        initAdminPanel();
+      } else {
+        // Asegurarse de que el input de contraseña tenga focus
+        document.getElementById('passwordInput').focus();
+      }
+
+      // Restricción del input de fecha de reagendamiento para ser solo miércoles
+      const rescheduleDateInput = document.getElementById('rescheduleFecha');
+      rescheduleDateInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (!val) return;
+        
+        const parts = val.split('-');
+        const dateObj = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+        if (dateObj.getUTCDay() !== 3) {
+          showAlert('Error de fecha', 'Las citas solo pueden programarse los días miércoles.', 'error');
+          e.target.value = '';
+        }
+      });
+      
+      // Restricción del input de fecha de bloqueo para ser solo miércoles
+      const blockedDateInput = document.getElementById('blockedDateInput');
+      if (blockedDateInput) {
+        blockedDateInput.addEventListener('input', (e) => {
+          const val = e.target.value;
+          if (!val) return;
+          
+          const parts = val.split('-');
+          const dateObj = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+          if (dateObj.getUTCDay() !== 3) {
+            showAlert('Error de fecha', 'Las fechas bloqueadas solo pueden ser días miércoles.', 'error');
+            e.target.value = '';
+          }
+        });
+      }
+
+      // Estilos mínimos en mobile para fecha
+      const today = new Date();
+      rescheduleDateInput.min = today.toISOString().split('T')[0];
+      if (blockedDateInput) {
+        blockedDateInput.min = today.toISOString().split('T')[0];
+      }
+    });
+
+    // Mostrar loading
+    function showLoading(show) {
+      const loader = document.getElementById('loadingOverlay');
+      if (show) {
+        loader.classList.add('show');
+      } else {
+        loader.classList.remove('show');
+      }
+    }
+
+    // Sistema de Alertas
+    function showAlert(title, message, type = 'success') {
+      const container = document.getElementById('alertContainer');
+      const alertId = 'alert_' + Date.now();
+      
+      let svgIcon = '';
+      if (type === 'success') {
+        svgIcon = `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`;
+      } else if (type === 'error') {
+        svgIcon = `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>`;
+      } else {
+        svgIcon = `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`;
+      }
+
+      const alertHtml = `
+        <div id="${alertId}" class="alert alert-${type}">
+          ${svgIcon}
+          <div class="alert-content">
+            <div class="alert-title">${title}</div>
+            <div>${message}</div>
+          </div>
+          <button class="alert-close" onclick="removeAlert('${alertId}')">&times;</button>
+        </div>
+      `;
+      
+      container.insertAdjacentHTML('beforeend', alertHtml);
+
+      // Auto-eliminar después de 4 segundos
+      setTimeout(() => {
+        removeAlert(alertId);
+      }, 4000);
+    }
+
+    function removeAlert(id) {
+      const alertEl = document.getElementById(id);
+      if (alertEl) {
+        alertEl.style.opacity = '0';
+        alertEl.style.transform = 'translateX(50px)';
+        alertEl.style.transition = 'all 0.3s ease';
+        setTimeout(() => alertEl.remove(), 300);
+      }
+    }
+
+    // MANEJAR LOGIN
+    async function handleLogin(event) {
+      event.preventDefault();
+      const username = document.getElementById('usernameInput').value;
+      const password = document.getElementById('passwordInput').value;
+
+      showLoading(true);
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Credenciales inválidas');
+        }
+
+        apiToken = data.token;
+        localStorage.setItem('adminToken', apiToken);
+        
+        document.getElementById('loginView').style.display = 'none';
+        document.getElementById('adminApp').style.display = 'flex';
+        
+        showAlert('Sesión Iniciada', 'Bienvenido al panel de administración.', 'success');
+        initAdminPanel();
+      } catch (error) {
+        showAlert('Error de Login', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // MANEJAR LOGOUT
+    function handleLogout() {
+      apiToken = "";
+      localStorage.removeItem('adminToken');
+      document.getElementById('adminApp').style.display = 'none';
+      document.getElementById('loginView').style.display = 'flex';
+      
+      // Limpiar inputs
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('passwordInput').focus();
+      
+      showAlert('Sesión Cerrada', 'Ha cerrado sesión correctamente.', 'info');
+    }
+
+    // CONTROLADOR DE LLAMADAS API CON AUTENTICACIÓN
+    async function fetchWithAuth(url, options = {}) {
+      if (!options.headers) {
+        options.headers = {};
+      }
+      options.headers['Authorization'] = `Bearer ${apiToken}`;
+
+      try {
+        const response = await fetch(url, options);
+        
+        if (response.status === 401 || response.status === 403) {
+          // Token expirado o inválido
+          handleLogout();
+          throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+        }
+
+        return response;
+      } catch (error) {
+        console.error('Error de red/API:', error);
+        throw error;
+      }
+    }
+
+    // INICIALIZACIÓN DEL PANEL DE ADMINISTRACIÓN
+    async function initAdminPanel() {
+      // 1. Establecer el miércoles actual (buscar el miércoles más cercano)
+      setTodayWednesday();
+      
+      // 2. Cargar los datos del backend
+      await loadAppointmentsData();
+    }
+
+    // Obtener todos los miércoles (para filtros)
+    function populateWednesdayFilter() {
+      const dateFilter = document.getElementById('dateFilter');
+      // Limpiar opciones anteriores pero mantener la primera
+      dateFilter.innerHTML = '<option value="">Todos los miércoles</option>';
+      
+      // Obtener fechas únicas de miércoles existentes en las citas
+      const uniqueDates = [...new Set(allAppointments.map(app => app.fecha))];
+      // Ordenar fechas descendente
+      uniqueDates.sort((a, b) => b.localeCompare(a));
+
+      uniqueDates.forEach(fecha => {
+        const option = document.createElement('option');
+        option.value = fecha;
+        
+        // Dar formato amigable
+        const parts = fecha.split('-');
+        const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+        option.textContent = `${parts[2]}-${meses[dateObj.getMonth()]}-${parts[0]} (Miércoles)`;
+        dateFilter.appendChild(option);
+      });
+    }
+
+    // Cargar información completa de citas
+    async function loadAppointmentsData() {
+      showLoading(true);
+      try {
+        const response = await fetchWithAuth('/api/citas');
+        if (!response.ok) {
+          throw new Error('No se pudieron obtener las citas.');
+        }
+        
+        allAppointments = await response.json();
+        filteredAppointments = [...allAppointments];
+        
+        // Llenar selector de miércoles de los filtros
+        populateWednesdayFilter();
+        
+        // Renderizar vistas activas
+        renderActiveTab();
+        
+        // Actualizar estadísticas generales
+        updateStats();
+
+      } catch (error) {
+        showAlert('Error de Carga', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // Cargar fecha actual o miércoles más cercano
+    function setTodayWednesday() {
+      const today = new Date();
+      // En JavaScript, 0 = Domingo, 1 = Lunes, ..., 3 = Miércoles, ..., 6 = Sábado
+      const currentDay = today.getDay();
+      
+      // Calcular cuántos días sumar o restar para llegar al miércoles de la semana actual
+      // Si hoy es miércoles (3), sumamos 0. Si es jueves (4), restamos 1, etc.
+      let diff = 3 - currentDay;
+      
+      const targetWednesday = new Date(today);
+      targetWednesday.setDate(today.getDate() + diff);
+      
+      currentWednesday = targetWednesday;
+      updateWednesdayLabel();
+    }
+
+    // Cambiar entre miércoles anterior o siguiente
+    function navigateWednesday(direction) {
+      // Dirección: -1 (anterior), 1 (siguiente)
+      currentWednesday.setDate(currentWednesday.getDate() + (direction * 7));
+      updateWednesdayLabel();
+      renderCalendarTimeline();
+    }
+
+    // Formatear etiqueta de la fecha en pantalla
+    function updateWednesdayLabel() {
+      const label = document.getElementById('currentWednesdayLabel');
+      
+      const meses = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+      ];
+      
+      const day = currentWednesday.getDate();
+      const monthStr = meses[currentWednesday.getMonth()];
+      const year = currentWednesday.getFullYear();
+      
+      label.textContent = `Miércoles, ${day} de ${monthStr} de ${year}`;
+      
+      // Habilitar/Deshabilitar botón de PDF dependiente del tab y fecha
+      checkPdfBtnStatus();
+    }
+
+    function checkPdfBtnStatus() {
+      const formattedDate = formatDateString(currentWednesday);
+      const exportBtn = document.getElementById('exportPdfBtn');
+      
+      if (!exportBtn) return;
+
+      const hasAppointmentsThisDay = allAppointments.some(app => app.fecha === formattedDate && app.estado !== 'cancelada');
+      
+      if (hasAppointmentsThisDay) {
+        exportBtn.removeAttribute('disabled');
+      } else {
+        exportBtn.setAttribute('disabled', 'true');
+      }
+    }
+
+    // Formatear objeto Date en YYYY-MM-DD
+    function formatDateString(dateObj) {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // CAMBIAR PESTAÑA DEL MENÚ
+    function switchTab(tabId) {
+      // Cambiar clase active en botones de navegación
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      
+      // Buscar botón correspondiente
+      const clickedBtn = Array.from(buttons).find(btn => {
+        if (tabId === 'calendarTab') return btn.textContent.includes('Calendario');
+        if (tabId === 'listTab') return btn.textContent.includes('Listado');
+        if (tabId === 'statsTab') return btn.textContent.includes('Estadísticas');
+        if (tabId === 'blockedTab') return btn.textContent.includes('Fechas');
+        return false;
+      });
+      
+      if (clickedBtn) clickedBtn.classList.add('active');
+
+      // Cambiar visibilidad de paneles
+      const panels = document.querySelectorAll('.tab-panel');
+      panels.forEach(panel => panel.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+
+      renderActiveTab();
+      checkPdfBtnStatus();
+    }
+
+    // RENDERIZAR VISTA ACTIVA
+    function renderActiveTab() {
+      const activePanel = document.querySelector('.tab-panel.active');
+      if (activePanel.id === 'calendarTab') {
+        renderCalendarTimeline();
+      } else if (activePanel.id === 'listTab') {
+        currentPage = 1;
+        applyFilters();
+      } else if (activePanel.id === 'statsTab') {
+        updateStats();
+      } else if (activePanel.id === 'blockedTab') {
+        loadBlockedDates();
+      }
+    }
+
+    // --- LOGICA DE RENDERIZADO TAB 1: TIMELINE / CALENDARIO SEMANAL ---
+    function renderCalendarTimeline() {
+      const listEl = document.getElementById('timelineList');
+      listEl.innerHTML = '';
+      
+      const formattedDate = formatDateString(currentWednesday);
+      
+      // Filtrar citas del miércoles seleccionado
+      const dayAppointments = allAppointments.filter(app => app.fecha === formattedDate);
+      
+      document.getElementById('wednesdayCountBadge').textContent = `${dayAppointments.filter(c => c.estado !== 'cancelada').length} / 15`;
+      
+      // Renderizar los 21 bloques de horario
+      TIME_SLOTS.forEach(slot => {
+        // Encontrar cita en este horario
+        const appointment = dayAppointments.find(app => app.hora === slot);
+        
+        const row = document.createElement('div');
+        row.className = 'timeline-row';
+        
+        const timeCell = document.createElement('div');
+        timeCell.className = 'timeline-time';
+        // Mostrar la hora de inicio amigable
+        timeCell.textContent = slot.split(' - ')[0];
+        
+        const contentCell = document.createElement('div');
+        contentCell.className = 'timeline-content';
+        
+        if (appointment) {
+          let badgeClass = 'badge-pendiente';
+          if (appointment.estado === 'confirmada') badgeClass = 'badge-confirmada';
+          if (appointment.estado === 'cancelada') badgeClass = 'badge-cancelada';
+          
+          let notesHtml = '';
+          if (appointment.notas_admin && appointment.notas_admin !== 'Folio asignado al agendar.' && appointment.notas_admin.trim() !== '') {
+            notesHtml = `<div class="citizen-notes"><strong>Notas admin:</strong> "${appointment.notas_admin}"</div>`;
+          }
+
+          contentCell.innerHTML = `
+            <div class="slot-booked">
+              <div class="citizen-brief">
+                <div class="citizen-name-folio">
+                  <span class="citizen-name">${escapeHtml(appointment.nombre)}</span>
+                  <span class="citizen-folio">${appointment.folio}</span>
+                  <span class="badge ${badgeClass}">${appointment.estado}</span>
+                </div>
+                <div class="citizen-details">
+                  <span>
+                    <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                    Tel: ${appointment.telefono}
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    Colonia: ${escapeHtml(appointment.colonia)}
+                  </span>
+                </div>
+                <div class="citizen-motivo">
+                  <strong>Tema:</strong> ${escapeHtml(appointment.motivo)}
+                </div>
+                ${notesHtml}
+              </div>
+              <div class="actions-cell">
+                ${appointment.estado !== 'confirmada' ? `
+                  <button onclick="changeAppointmentStatus(${appointment.id}, 'confirmada')" class="btn btn-sm btn-success" title="Confirmar Cita">
+                    Confirmar
+                  </button>
+                ` : ''}
+                ${appointment.estado !== 'cancelada' ? `
+                  <button onclick="changeAppointmentStatus(${appointment.id}, 'cancelada')" class="btn btn-sm btn-danger" title="Cancelar Cita">
+                    Cancelar
+                  </button>
+                ` : ''}
+                <button onclick="openRescheduleModal(${JSON.stringify(appointment).replace(/"/g, '&quot;')})" class="btn btn-sm btn-outline" title="Reagendar Cita">
+                  Reagendar
+                </button>
+                <button onclick="openEditModal(${JSON.stringify(appointment).replace(/"/g, '&quot;')})" class="btn btn-sm btn-muted" title="Administrar Notas">
+                  Notas
+                </button>
+                <button onclick="resendConfirmationEmail(${appointment.id})" class="btn btn-sm btn-outline" title="Reenviar Correo de Confirmación" style="border-color: var(--secondary); color: var(--secondary-dark);">
+                  Reenviar Correo
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          contentCell.innerHTML = `
+            <div class="slot-empty">
+              Horario Disponible para agendar
+            </div>
+            <div class="actions-cell">
+              <button onclick="quickSchedule('${formattedDate}', '${slot}')" class="btn btn-sm btn-outline btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">
+                + Registrar Cita
+              </button>
+            </div>
+          `;
+        }
+        
+        row.appendChild(timeCell);
+        row.appendChild(contentCell);
+        listEl.appendChild(row);
+      });
+      
+      checkPdfBtnStatus();
+    }
+
+    // Registro rápido desde el calendario (redirige o avisa)
+    function quickSchedule(fecha, slot) {
+      const confirmAction = confirm(`¿Desea ir al formulario de registro ciudadano para agendar en la fecha ${fecha} y horario ${slot}?`);
+      if (confirmAction) {
+        window.open(`/index.html?fecha=${fecha}&hora=${encodeURIComponent(slot)}#agendar`, '_blank');
+      }
+    }
+
+    // --- LOGICA DE RENDERIZADO TAB 2: LISTADO DE CITAS Y TABLA ---
+    function applyFilters() {
+      const searchVal = document.getElementById('searchFilter').value.toLowerCase().trim();
+      const dateVal = document.getElementById('dateFilter').value;
+      const statusVal = document.getElementById('statusFilter').value;
+      const motivoVal = document.getElementById('motivoFilter').value.toLowerCase().trim();
+
+      filteredAppointments = allAppointments.filter(app => {
+        // Filtro búsqueda general
+        const matchSearch = searchVal === "" || 
+                            app.folio.toLowerCase().includes(searchVal) ||
+                            app.nombre.toLowerCase().includes(searchVal) ||
+                            app.colonia.toLowerCase().includes(searchVal);
+                            
+        // Filtro fecha
+        const matchDate = dateVal === "" || app.fecha === dateVal;
+        
+        // Filtro estado
+        const matchStatus = statusVal === "" || app.estado === statusVal;
+        
+        // Filtro motivo
+        const matchMotivo = motivoVal === "" || app.motivo.toLowerCase().includes(motivoVal);
+
+        return matchSearch && matchDate && matchStatus && matchMotivo;
+      });
+
+      renderTable();
+    }
+
+    function clearFilters() {
+      document.getElementById('searchFilter').value = "";
+      document.getElementById('dateFilter').value = "";
+      document.getElementById('statusFilter').value = "";
+      document.getElementById('motivoFilter').value = "";
+      applyFilters();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      // Paginación
+      const totalItems = filteredAppointments.length;
+      document.getElementById('pagTotal').textContent = totalItems;
+
+      if (totalItems === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="table-empty">No se encontraron citas con los filtros aplicados.</td></tr>`;
+        document.getElementById('pagShowing').textContent = "0";
+        document.getElementById('btnPrevPage').setAttribute('disabled', 'true');
+        document.getElementById('btnNextPage').setAttribute('disabled', 'true');
+        return;
+      }
+
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+      
+      document.getElementById('pagShowing').textContent = `${startIndex + 1}-${endIndex}`;
+
+      // Botones navegación
+      if (currentPage === 1) {
+        document.getElementById('btnPrevPage').setAttribute('disabled', 'true');
+      } else {
+        document.getElementById('btnPrevPage').removeAttribute('disabled');
+      }
+
+      if (currentPage === totalPages) {
+        document.getElementById('btnNextPage').setAttribute('disabled', 'true');
+      } else {
+        document.getElementById('btnNextPage').removeAttribute('disabled');
+      }
+
+      const paginatedItems = filteredAppointments.slice(startIndex, endIndex);
+
+      paginatedItems.forEach(appointment => {
+        const row = document.createElement('tr');
+        
+        let badgeClass = 'badge-pendiente';
+        if (appointment.estado === 'confirmada') badgeClass = 'badge-confirmada';
+        if (appointment.estado === 'cancelada') badgeClass = 'badge-cancelada';
+
+        let notesHtml = '';
+        if (appointment.notas_admin && appointment.notas_admin !== 'Folio asignado al agendar.' && appointment.notas_admin.trim() !== '') {
+          notesHtml = `<div class="table-notes-box">${escapeHtml(appointment.notas_admin)}</div>`;
+        } else {
+          notesHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;">Sin observaciones</span>`;
+        }
+
+        row.innerHTML = `
+          <td style="font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--secondary-dark);">${appointment.folio}</td>
+          <td><strong>${formatShortDate(appointment.fecha)}</strong></td>
+          <td style="white-space: nowrap; font-weight: 600;">${appointment.hora.split(' - ')[0]}</td>
+          <td>
+            <div class="table-citizen-name">${escapeHtml(appointment.nombre)}</div>
+          </td>
+          <td>
+            <div class="table-citizen-meta">
+              <span><strong>Tel:</strong> ${appointment.telefono}</span>
+              <span><strong>Colonia:</strong> ${escapeHtml(appointment.colonia)}</span>
+            </div>
+          </td>
+          <td style="max-width: 200px;">
+            <div style="font-weight: 600; font-size: 0.8rem;">${escapeHtml(appointment.motivo)}</div>
+          </td>
+          <td>
+            <div class="table-notes-container">${notesHtml}</div>
+          </td>
+          <td>
+            <span class="badge ${badgeClass}">${appointment.estado}</span>
+          </td>
+          <td>
+            <div class="actions-cell" style="justify-content: center;">
+              ${appointment.estado !== 'confirmada' ? `
+                <button onclick="changeAppointmentStatus(${appointment.id}, 'confirmada')" class="btn btn-sm btn-success" title="Confirmar">
+                  Conf
+                </button>
+              ` : ''}
+              ${appointment.estado !== 'cancelada' ? `
+                <button onclick="changeAppointmentStatus(${appointment.id}, 'cancelada')" class="btn btn-sm btn-danger" title="Cancelar">
+                  Canc
+                </button>
+              ` : ''}
+              <button onclick="openRescheduleModal(${JSON.stringify(appointment).replace(/"/g, '&quot;')})" class="btn btn-sm btn-outline" title="Reagendar">
+                Reag
+              </button>
+              <button onclick="openEditModal(${JSON.stringify(appointment).replace(/"/g, '&quot;')})" class="btn btn-sm btn-muted" title="Administrar Notas">
+                Notas
+              </button>
+              <button onclick="resendConfirmationEmail(${appointment.id})" class="btn btn-sm btn-outline" title="Reenviar Correo de Confirmación" style="border-color: var(--secondary); color: var(--secondary-dark);">
+                Correo
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function changePage(direction) {
+      currentPage += direction;
+      renderTable();
+    }
+
+    function formatShortDate(dateStr) {
+      const parts = dateStr.split('-');
+      const dateObj = new Date(parts[0], parts[1]-1, parts[2]);
+      const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+      return `${parts[2]}-${meses[dateObj.getMonth()]}-${parts[0]}`;
+    }
+
+
+    // --- LOGICA DE RENDERIZADO TAB 3: ESTADÍSTICAS ---
+    function updateStats() {
+      // 1. Histórico Total
+      document.getElementById('statTotalCitas').textContent = allAppointments.length;
+
+      // 2. Citas del mes actual (según fecha de hoy local)
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+      const prefixMonth = `${currentYear}-${currentMonth}`; // "YYYY-MM"
+
+      const monthAppointments = allAppointments.filter(app => app.fecha.startsWith(prefixMonth));
+      document.getElementById('statCitasMes').textContent = monthAppointments.length;
+
+      // 3. Atendidas/Confirmadas vs Pendientes
+      const confirmedCount = allAppointments.filter(app => app.estado === 'confirmada').length;
+      const pendingCount = allAppointments.filter(app => app.estado === 'pendiente').length;
+      const cancelledCount = allAppointments.filter(app => app.estado === 'cancelada').length;
+
+      document.getElementById('statCitasConfirmadas').textContent = confirmedCount;
+      document.getElementById('statCitasPendientes').textContent = pendingCount;
+
+      // 4. Grafico Donut de Distribución
+      const donutTotal = confirmedCount + pendingCount + cancelledCount;
+      document.getElementById('donutTotalText').textContent = donutTotal;
+
+      if (donutTotal > 0) {
+        const pConfirm = (confirmedCount / donutTotal) * 100;
+        const pPending = (pendingCount / donutTotal) * 100;
+        const pCancel = (cancelledCount / donutTotal) * 100;
+
+        document.getElementById('legendConfirmadaVal').textContent = `${Math.round(pConfirm)}% (${confirmedCount})`;
+        document.getElementById('legendPendienteVal').textContent = `${Math.round(pPending)}% (${pendingCount})`;
+        document.getElementById('legendCanceladaVal').textContent = `${Math.round(pCancel)}% (${cancelledCount})`;
+
+        // Configurar los segmentos en el SVG circular
+        const segConfirm = document.getElementById('donutSegmentConfirmada');
+        const segPending = document.getElementById('donutSegmentPendiente');
+        const segCancel = document.getElementById('donutSegmentCancelada');
+
+        segConfirm.setAttribute('stroke-dasharray', `${pConfirm} 100`);
+        
+        segPending.setAttribute('stroke-dasharray', `${pPending} 100`);
+        segPending.setAttribute('stroke-dashoffset', `-${pConfirm}`);
+        
+        segCancel.setAttribute('stroke-dasharray', `${pCancel} 100`);
+        segCancel.setAttribute('stroke-dashoffset', `-${pConfirm + pPending}`);
+      } else {
+        document.getElementById('legendConfirmadaVal').textContent = '0%';
+        document.getElementById('legendPendienteVal').textContent = '0%';
+        document.getElementById('legendCanceladaVal').textContent = '0%';
+      }
+
+      // 5. Grafico de Motivos/Temas más frecuentes
+      const reasonsMap = {};
+      allAppointments.forEach(app => {
+        let m = app.motivo.trim();
+        let group = "Otros Temas / Peticiones Generales";
+        
+        const textLower = m.toLowerCase();
+        if (textLower.includes('agua') || textLower.includes('drenaje') || textLower.includes('alcant')) {
+          group = "Agua Potable y Alcantarillado";
+        } else if (textLower.includes('alumbrado') || textLower.includes('luz') || textLower.includes('electr')) {
+          group = "Alumbrado Público y Electrificación";
+        } else if (textLower.includes('calle') || textLower.includes('bache') || textLower.includes('paviment') || textLower.includes('carreter') || textLower.includes('obra')) {
+          group = "Obras Públicas y Vialidad";
+        } else if (textLower.includes('seguridad') || textLower.includes('polic') || textLower.includes('patrull') || textLower.includes('robo')) {
+          group = "Seguridad Ciudadana y Vigilancia";
+        } else if (textLower.includes('basura') || textLower.includes('limpia') || textLower.includes('ecolog') || textLower.includes('parque')) {
+          group = "Servicios Públicos y Ecología";
+        } else if (textLower.includes('apoyo') || textLower.includes('despensa') || textLower.includes('beca') || textLower.includes('social') || textLower.includes('salud')) {
+          group = "Programas Sociales y Salud";
+        } else {
+          group = m.length > 35 ? m.substring(0, 32) + '...' : m;
+        }
+
+        reasonsMap[group] = (reasonsMap[group] || 0) + 1;
+      });
+
+      // Ordenar y renderizar barras
+      const sortedReasons = Object.entries(reasonsMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5); // Top 5
+
+      const maxReasonVal = sortedReasons.length > 0 ? sortedReasons[0][1] : 1;
+      const reasonsListEl = document.getElementById('reasonsChartList');
+      reasonsListEl.innerHTML = '';
+
+      if (sortedReasons.length === 0) {
+        reasonsListEl.innerHTML = '<div style="color: var(--text-muted); font-style: italic; font-size: 0.8rem; text-align: center;">No hay datos registrados aún.</div>';
+      }
+
+      sortedReasons.forEach(([label, value]) => {
+        const pct = (value / maxReasonVal) * 100;
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+        row.innerHTML = `
+          <div class="bar-label-row">
+            <span>${label}</span>
+            <strong>${value} petición(es)</strong>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: ${pct}%;"></div>
+          </div>
+        `;
+        reasonsListEl.appendChild(row);
+      });
+
+      // 6. Colonias con más solicitudes
+      const coloniesMap = {};
+      allAppointments.forEach(app => {
+        const col = app.colonia.trim();
+        coloniesMap[col] = (coloniesMap[col] || 0) + 1;
+      });
+
+      const sortedColonies = Object.entries(coloniesMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5); // Top 5
+
+      const maxColVal = sortedColonies.length > 0 ? sortedColonies[0][1] : 1;
+      const coloniesListEl = document.getElementById('coloniasChartList');
+      coloniesListEl.innerHTML = '';
+
+      if (sortedColonies.length === 0) {
+        coloniesListEl.innerHTML = '<div style="color: var(--text-muted); font-style: italic; font-size: 0.8rem; text-align: center;">No hay colonias registradas aún.</div>';
+      }
+
+      sortedColonies.forEach(([label, value]) => {
+        const pct = (value / maxColVal) * 100;
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+        row.innerHTML = `
+          <div class="bar-label-row">
+            <span>Col. / Fracc. ${label}</span>
+            <strong>${value} cita(s)</strong>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: ${pct}%; background: linear-gradient(90deg, var(--secondary) 0%, var(--secondary-light) 100%);"></div>
+          </div>
+        `;
+        coloniesListEl.appendChild(row);
+      });
+    }
+
+    // --- LOGICA DE CAMBIAR ESTADO DE CITA DIRECTAMENTE ---
+    async function changeAppointmentStatus(id, newStatus) {
+      if (newStatus === 'cancelada') {
+        const confirmCancel = confirm('¿Está seguro de que desea CANCELAR esta cita? Se enviará una notificación por correo electrónico al ciudadano.');
+        if (!confirmCancel) return;
+      }
+
+      showLoading(true);
+      try {
+        const response = await fetchWithAuth(`/api/citas/${id}/estado`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            estado: newStatus,
+            notas_admin: newStatus === 'confirmada' ? 'Cita confirmada por el administrador.' : 'Cita cancelada por el administrador.'
+          })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al actualizar el estado.');
+        }
+
+        showAlert('Cita Actualizada', `La cita con Folio ${data.appointment.folio} ha cambiado a: ${newStatus.toUpperCase()}`, 'success');
+        
+        await loadAppointmentsData();
+      } catch (error) {
+        showAlert('Error de Operación', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // --- LOGICA DE MODAL: EDITAR NOTAS / DETALLES ---
+    function openEditModal(appointment) {
+      document.getElementById('editCitaId').value = appointment.id;
+      document.getElementById('editCitizenName').textContent = appointment.nombre;
+      document.getElementById('editCitizenDetails').textContent = `Tel: ${appointment.telefono} | Colonia: ${appointment.colonia}`;
+      document.getElementById('editCitaFolio').textContent = appointment.folio;
+      document.getElementById('editCitaFechaHora').textContent = `${formatShortDate(appointment.fecha)} a las ${appointment.hora.split(' - ')[0]}`;
+      document.getElementById('editCitaMotivo').textContent = appointment.motivo;
+      
+      document.getElementById('editEstado').value = appointment.estado;
+      document.getElementById('editNotasAdmin').value = appointment.notas_admin === 'Folio asignado al agendar.' ? '' : (appointment.notas_admin || '');
+      
+      openModal('editModal');
+    }
+
+    async function saveCitaEstado() {
+      const id = document.getElementById('editCitaId').value;
+      const estado = document.getElementById('editEstado').value;
+      const notas_admin = document.getElementById('editNotasAdmin').value.trim();
+
+      showLoading(true);
+      try {
+        const response = await fetchWithAuth(`/api/citas/${id}/estado`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            estado,
+            notas_admin: notas_admin === '' ? 'Folio asignado al agendar.' : notas_admin
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al guardar los datos.');
+        }
+
+        showAlert('Cita Actualizada', 'Los cambios en la cita y observaciones han sido guardados.', 'success');
+        closeModal('editModal');
+        await loadAppointmentsData();
+      } catch (error) {
+        showAlert('Error de Guardado', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // --- LOGICA DE MODAL: REAGENDAR / MODIFICAR FECHA Y HORA ---
+    function openRescheduleModal(appointment) {
+      document.getElementById('rescheduleCitaId').value = appointment.id;
+      document.getElementById('rescheduleCitizenName').textContent = appointment.nombre;
+      document.getElementById('rescheduleCitaActual').textContent = `Folio: ${appointment.folio} | Fecha: ${formatShortDate(appointment.fecha)} | Horario: ${appointment.hora}`;
+      
+      document.getElementById('rescheduleFecha').value = '';
+      document.getElementById('selectedRescheduleSlot').value = '';
+      
+      const slotsContainer = document.getElementById('rescheduleSlotsList');
+      slotsContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.8rem;">Seleccione una fecha de miércoles primero...</div>`;
+      
+      document.getElementById('rescheduleNotas').value = `Reprogramación de cita Folio ${appointment.folio}`;
+
+      openModal('rescheduleModal');
+    }
+
+    // Cargar horarios ocupados para la nueva fecha de reagendamiento
+    async function loadAvailableSlotsForReschedule() {
+      const fechaVal = document.getElementById('rescheduleFecha').value;
+      const slotsContainer = document.getElementById('rescheduleSlotsList');
+      const citaId = document.getElementById('rescheduleCitaId').value;
+      
+      if (!fechaVal) return;
+
+      slotsContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--primary);"><div class="spinner" style="width: 20px; height: 20px; border-width: 2px; margin: 0 auto 0.5rem auto;"></div>Consultando horarios...</div>';
+
+      try {
+        const response = await fetch(`/api/citas-ocupadas?fecha=${fechaVal}`);
+        if (!response.ok) {
+          throw new Error('Error al obtener horarios ocupados.');
+        }
+
+        const occupiedSlots = await response.json();
+        
+        const currentCita = allAppointments.find(app => String(app.id) === String(citaId));
+        
+        slotsContainer.innerHTML = '';
+        
+        let availableCount = 0;
+        
+        TIME_SLOTS.forEach(slot => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'modal-slot-btn';
+          btn.textContent = slot.split(' - ')[0];
+          btn.setAttribute('data-slot', slot);
+          
+          const isOccupiedByOther = occupiedSlots.includes(slot);
+          const isCurrentSlot = currentCita && currentCita.fecha === fechaVal && currentCita.hora === slot;
+
+          if (isOccupiedByOther && !isCurrentSlot) {
+            btn.disabled = true;
+            btn.title = "Horario ocupado";
+          } else {
+            availableCount++;
+            if (isCurrentSlot) {
+              btn.classList.add('selected');
+              document.getElementById('selectedRescheduleSlot').value = slot;
+              btn.title = "Horario actual de esta cita";
+            }
+            btn.onclick = () => selectRescheduleSlot(btn, slot);
+          }
+          
+          slotsContainer.appendChild(btn);
+        });
+
+        if (availableCount === 0) {
+          slotsContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--error); font-weight: 600; font-size: 0.8rem;">⚠️ Sin horarios disponibles para esta fecha. Límite de 15 citas alcanzado.</div>';
+        }
+
+      } catch (error) {
+        slotsContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--error); font-size: 0.8rem;">${error.message}</div>`;
+      }
+    }
+
+    function selectRescheduleSlot(btnElement, slot) {
+      const buttons = document.querySelectorAll('.modal-slot-btn');
+      buttons.forEach(btn => btn.classList.remove('selected'));
+      
+      btnElement.classList.add('selected');
+      document.getElementById('selectedRescheduleSlot').value = slot;
+    }
+
+    async function saveCitaReschedule() {
+      const id = document.getElementById('rescheduleCitaId').value;
+      const fecha = document.getElementById('rescheduleFecha').value;
+      const hora = document.getElementById('selectedRescheduleSlot').value;
+      const notas_admin = document.getElementById('rescheduleNotas').value.trim();
+
+      if (!fecha) {
+        showAlert('Campo Requerido', 'Por favor seleccione la fecha del miércoles.', 'error');
+        return;
+      }
+
+      if (!hora) {
+        showAlert('Campo Requerido', 'Por favor seleccione un horario disponible.', 'error');
+        return;
+      }
+
+      showLoading(true);
+      try {
+        const response = await fetchWithAuth(`/api/citas/${id}/reagendar`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fecha,
+            hora,
+            notas_admin: notas_admin === "" ? 'Cita reagendada por administración.' : notas_admin
+          })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al reprogramar la cita.');
+        }
+
+        showAlert('Cita Reagendada', `Se ha reprogramado la cita exitosamente al miércoles ${formatShortDate(fecha)} en el horario ${hora}.`, 'success');
+        closeModal('rescheduleModal');
+        await loadAppointmentsData();
+      } catch (error) {
+        showAlert('Error de Guardado', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // --- LOGICA DE EXPORTACIÓN A PDF PARA IMPRIMIR ---
+    function exportWednesdayPDF() {
+      if (!currentWednesday) return;
+      
+      const formattedDate = formatDateString(currentWednesday);
+      
+      const dayAppointments = allAppointments.filter(app => app.fecha === formattedDate && app.estado !== 'cancelada');
+      
+      if (dayAppointments.length === 0) {
+        showAlert('Exportar PDF', 'No hay citas activas registradas para este miércoles para exportar.', 'warning');
+        return;
+      }
+
+      dayAppointments.sort((a, b) => a.hora.localeCompare(b.hora));
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      
+      const pColor = [15, 76, 58]; 
+      const sColor = [185, 147, 38]; 
+
+      doc.setFillColor(pColor[0], pColor[1], pColor[2]);
+      doc.rect(0, 0, 210, 38, 'F'); 
+      
+      doc.setDrawColor(sColor[0], sColor[1], sColor[2]);
+      doc.setLineWidth(1.5);
+      doc.line(0, 38, 210, 38); 
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text("MIÉRCOLES CIUDADANO", 105, 14, { align: 'center' });
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(229, 193, 88); 
+      doc.text("H. AYUNTAMIENTO CONSTITUCIONAL DE SAN FERNANDO, CHIAPAS", 105, 20, { align: 'center' });
+      doc.text("DIRECCIÓN DE ATENCIÓN CIUDADANA", 105, 25, { align: 'center' });
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      
+      const meses = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+      ];
+      const dateText = `LISTA DE AUDIENCIAS: MIÉRCOLES, ${currentWednesday.getDate()} DE ${meses[currentWednesday.getMonth()].toUpperCase()} DE ${currentWednesday.getFullYear()}`;
+      doc.text(dateText, 105, 33, { align: 'center' });
+
+      doc.setTextColor(45, 55, 72);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Total de audiencias programadas para hoy: ${dayAppointments.length} de 15 máximo.`, 15, 46);
+      doc.text(`Generado el: ${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX')}`, 195, 46, { align: 'right' });
+
+      const tableData = [];
+      dayAppointments.forEach((app, idx) => {
+        tableData.push([
+          idx + 1,
+          app.hora.split(' - ')[0],
+          app.folio,
+          app.nombre,
+          app.colonia,
+          app.motivo,
+          '' 
+        ]);
+      });
+
+      doc.autoTable({
+        startY: 50,
+        head: [['N°', 'Hora', 'Folio', 'Ciudadano', 'Colonia', 'Asunto / Motivo de Solicitud', 'Firma de Conformidad / Notas']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: pColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          halign: 'center',
+          valign: 'middle'
+        },
+        columnStyles: {
+          0: { cellWidth: 8, halign: 'center' }, 
+          1: { cellWidth: 16, halign: 'center', fontStyle: 'bold' }, 
+          2: { cellWidth: 18, halign: 'center', fontStyle: 'bold' }, 
+          3: { cellWidth: 42, fontSize: 8.5 }, 
+          4: { cellWidth: 32, fontSize: 8 }, 
+          5: { cellWidth: 48, fontSize: 8.5 }, 
+          6: { cellWidth: 26 } 
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 2,
+          valign: 'middle',
+          overflow: 'linebreak'
+        },
+        alternateRowStyles: {
+          fillColor: [247, 250, 252]
+        },
+        margin: { left: 10, right: 10 },
+        didDrawPage: function(data) {
+          doc.setFontSize(8);
+          doc.setTextColor(113, 128, 150);
+          doc.text("Ayuntamiento Municipal: Calle Central Oriente #1, Col. Centro, San Fernando, Chiapas", 105, 287, { align: 'center' });
+          doc.text(`Página ${data.pageNumber} de ${doc.internal.getNumberOfPages()}`, 195, 287, { align: 'right' });
+        }
+      });
+
+      const fileName = `MiercolesCiudadano_Lista_${formattedDate}.pdf`;
+      doc.save(fileName);
+      showAlert('PDF Exportado', `Se ha generado el archivo ${fileName} listo para imprimir.`, 'success');
+    }
+
+
+    // --- LÓGICA DE FECHAS BLOQUEADAS ---
+    let allBlockedDates = [];
+
+    // Cargar y mostrar la lista de fechas bloqueadas
+    async function loadBlockedDates() {
+      const tableBody = document.getElementById('blockedDatesTableBody');
+      tableBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Cargando fechas bloqueadas...</td></tr>";
+
+      try {
+        const response = await fetchWithAuth('/api/fechas-bloqueadas');
+        if (!response.ok) {
+          throw new Error('Error al obtener la lista de fechas bloqueadas.');
+        }
+
+        allBlockedDates = await response.json();
+        tableBody.innerHTML = "";
+
+        if (allBlockedDates.length === 0) {
+          tableBody.innerHTML = "<tr><td colspan='4' style='text-align:center; color: var(--text-muted); font-style: italic;'>No hay fechas bloqueadas actualmente.</td></tr>";
+          return;
+        }
+
+        allBlockedDates.forEach(item => {
+          const row = document.createElement('tr');
+          
+          // Formatear la fecha
+          const parts = item.fecha.split('-');
+          const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+          const dayName = "Miércoles"; // Dado que sólo se pueden bloquear miércoles
+
+          row.innerHTML = `
+            <td><strong>${formatShortDate(item.fecha)}</strong></td>
+            <td>${dayName}</td>
+            <td>${escapeHtml(item.motivo)}</td>
+            <td style="text-align: center;">
+              <button onclick="deleteBlockedDate(${item.id}, '${item.fecha}')" class="btn btn-sm btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                Eliminar
+              </button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error(error);
+        tableBody.innerHTML = `<tr><td colspan='4' style='text-align:center; color:var(--error);'>Error: ${error.message}</td></tr>`;
+      }
+    }
+
+    // Agregar fecha bloqueada
+    async function handleBlockedDateSubmit(event) {
+      event.preventDefault();
+      
+      const fechaVal = document.getElementById('blockedDateInput').value;
+      const motivoVal = document.getElementById('blockedReason').value.trim();
+
+      if (!fechaVal || !motivoVal) {
+        showAlert('Datos incompletos', 'Por favor selecciona una fecha y proporciona un motivo.', 'warning');
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        const response = await fetchWithAuth('/api/fechas-bloqueadas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fecha: fechaVal,
+            motivo: motivoVal
+          })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al bloquear la fecha.');
+        }
+
+        showAlert('Fecha Bloqueada', `La fecha ${formatShortDate(fechaVal)} ha sido bloqueada correctamente.`, 'success');
+        document.getElementById('blockedDateForm').reset();
+        
+        // Recargar la lista
+        await loadBlockedDates();
+      } catch (error) {
+        showAlert('Error de Guardado', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // Eliminar bloqueo de fecha
+    async function deleteBlockedDate(id, fecha) {
+      if (!confirm(`¿Está seguro de que desea desbloquear la fecha ${formatShortDate(fecha)}?`)) {
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        const response = await fetchWithAuth(`/api/fechas-bloqueadas/${id}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al desbloquear la fecha.');
+        }
+
+        showAlert('Fecha Desbloqueada', `La fecha ${formatShortDate(fecha)} ha sido desbloqueada.`, 'success');
+        await loadBlockedDates();
+      } catch (error) {
+        showAlert('Error al Eliminar', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // Reenviar correo de confirmación de cita al ciudadano
+    async function resendConfirmationEmail(id) {
+      if (!confirm('¿Está seguro de que desea reenviar el correo de confirmación de esta cita al ciudadano?')) {
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        const response = await fetchWithAuth(`/api/citas/${id}/reenviar-correo`, {
+          method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al reenviar el correo.');
+        }
+
+        showAlert('Correo Enviado', data.message || 'El correo de confirmación ha sido reenviado correctamente.', 'success');
+      } catch (error) {
+        console.error(error);
+        showAlert('Error de Correo', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // --- AUXILIARES GENERALES ---
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('show');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('show');
+    }
+
+    // Escapar caracteres HTML para seguridad
+    function escapeHtml(text) {
+      if (!text) return "";
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+  </script>
+</body>
+</html>
