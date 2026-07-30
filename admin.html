@@ -1505,6 +1505,9 @@
           <a href="/index.html" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.4); color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 600;">
             Sitio Público
           </a>
+          <button onclick="openModal('changePasswordModal')" class="btn btn-sm btn-outline" style="border-color: rgba(255,255,255,0.4); color: white; font-weight: 600;">
+            🔑 Contraseña
+          </button>
           <button onclick="handleLogout()" class="btn btn-sm btn-outline" style="border-color: var(--accent); color: var(--accent);">
             Cerrar Sesión
           </button>
@@ -3170,6 +3173,46 @@
       document.getElementById(modalId).classList.remove('show');
     }
 
+    // Cambiar contraseña del administrador
+    async function changeAdminPassword(event) {
+      event.preventDefault();
+
+      const currentPassword = document.getElementById('currentPasswordInput').value;
+      const newPassword = document.getElementById('newPasswordInput').value;
+      const confirmPassword = document.getElementById('confirmPasswordInput').value;
+
+      if (newPassword !== confirmPassword) {
+        showAlert('Error de Validación', 'La nueva contraseña y la confirmación no coinciden.', 'warning');
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        const response = await fetchWithAuth('/api/admin/cambiar-password', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al cambiar la contraseña.');
+        }
+
+        showAlert('Contraseña Actualizada', 'La contraseña de administración se ha actualizado con éxito.', 'success');
+        document.getElementById('changePasswordForm').reset();
+        closeModal('changePasswordModal');
+      } catch (error) {
+        showAlert('Error al Cambiar Contraseña', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
     // Escapar caracteres HTML para seguridad
     function escapeHtml(text) {
       if (!text) return "";
@@ -3183,5 +3226,35 @@
       return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     }
   </script>
+
+  <!-- MODAL: CAMBIAR CONTRASEÑA DE ADMINISTRADOR -->
+  <div id="changePasswordModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3>🔑 Cambiar Contraseña de Administración</h3>
+        <button onclick="closeModal('changePasswordModal')" class="close-btn">&times;</button>
+      </div>
+      <form id="changePasswordForm" onsubmit="changeAdminPassword(event)">
+        <div class="modal-body" style="padding: 1.5rem;">
+          <div class="form-group" style="margin-bottom: 1.2rem;">
+            <label for="currentPasswordInput">Contraseña Actual *</label>
+            <input type="password" id="currentPasswordInput" required style="width: 100%; padding: 0.7rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm);" placeholder="Ingresa tu contraseña actual">
+          </div>
+          <div class="form-group" style="margin-bottom: 1.2rem;">
+            <label for="newPasswordInput">Nueva Contraseña (mínimo 6 caracteres) *</label>
+            <input type="password" id="newPasswordInput" required minlength="6" style="width: 100%; padding: 0.7rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm);" placeholder="Ingresa tu nueva contraseña">
+          </div>
+          <div class="form-group">
+            <label for="confirmPasswordInput">Confirmar Nueva Contraseña *</label>
+            <input type="password" id="confirmPasswordInput" required minlength="6" style="width: 100%; padding: 0.7rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm);" placeholder="Repite tu nueva contraseña">
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 1rem 1.5rem; background-color: var(--bg-body); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 0.5rem;">
+          <button type="button" onclick="closeModal('changePasswordModal')" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

@@ -25,9 +25,29 @@ const publicApiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Configuración de Rate Limit estricto para Login (Prevención de ataques de fuerza bruta)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // Límite de 5 intentos por IP
+  message: {
+    error: 'Has superado el límite de intentos de inicio de sesión (máximo 5 intentos cada 15 minutos). Por seguridad, inténtalo más tarde.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Middlewares
 app.use(cors());
 app.use(express.json());
+
+// Cabeceras de Seguridad HTTP (Security Headers)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 // Servir la interfaz web estáticamente
 app.use(express.static(path.join(__dirname)));
@@ -110,8 +130,8 @@ function authenticateToken(req, res, next) {
 
 // --- ENDPOINTS DE AUTENTICACIÓN ---
 
-// Login para obtener Token Admin
-app.post('/api/login', async (req, res) => {
+// Login para obtener Token Admin (Con Limite de Fuerza Bruta)
+app.post('/api/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
 
   if (!password) {
@@ -142,15 +162,54 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Cambiar Contraseña del Administrador (Protegido con JWT)
+app.put('/api/admin/cambiar-password', authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'La contraseña actual y la nueva contraseña son requeridas.' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'La nueva contraseña debe constar de al menos 6 caracteres por seguridad.' });
+  }
+
+  try {
+    const adminUser = await db.get('SELECT * FROM administradores WHERE usuario = ?', ['admin']);
+    if (!adminUser) {
+      return res.status(404).json({ error: 'Cuenta de administrador no encontrada.' });
+    }
+
+    const match = await bcrypt.compare(currentPassword, adminUser.password_hash);
+    if (!match) {
+      return res.status(401).json({ error: 'La contraseña actual ingresada es incorrecta.' });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await db.run('UPDATE administradores SET password_hash = ? WHERE usuario = ?', [newHash, 'admin']);
+
+    return res.json({ success: true, message: 'La contraseña de administración ha sido actualizada correctamente.' });
+  } catch (error) {
+    console.error('Error al cambiar contraseña:', error);
+    return res.status(500).json({ error: 'Error interno del servidor al cambiar la contraseña.' });
+  }
+});
+
 // --- ENDPOINTS REST ---
 
-// 1. POST /api/registro: Registrar a un Ciudadano (Con Rate Limiting)
+// 1. POST /api/registro: Registrar a un Ciudadano (Con Rate Limiting y Validación Estricta)
 app.post('/api/registro', publicApiLimiter, async (req, res) => {
   const { nombre, telefono, correo, colonia } = req.body;
 
   // Validaciones básicas
   if (!nombre || !telefono || !correo || !colonia) {
     return res.status(400).json({ error: 'Todos los campos del ciudadano son obligatorios.' });
+  }
+
+  // Validar formato de correo electrónico
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(correo.trim())) {
+    return res.status(400).json({ error: 'El correo electrónico ingresado no tiene un formato válido.' });
   }
 
   // Validar teléfono (10 dígitos)
