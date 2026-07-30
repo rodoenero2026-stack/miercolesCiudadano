@@ -49,6 +49,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Servir favicon.ico
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'img', 'logo.webp'));
+});
+
 // Servir la interfaz web estáticamente
 app.use(express.static(path.join(__dirname)));
 
