@@ -61,9 +61,12 @@ app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'img', 'logo.webp'));
 });
 
-// Servir únicamente los archivos estáticos requeridos de forma individual
+// Servir los archivos estáticos requeridos de forma individual
 app.use('/img', express.static(path.join(__dirname, 'img')));
 app.get('/styles.css', (req, res) => res.sendFile(path.join(__dirname, 'styles.css')));
+app.get('/admin.css', (req, res) => res.sendFile(path.join(__dirname, 'admin.css')));
+app.get('/index.js', (req, res) => res.sendFile(path.join(__dirname, 'index.js')));
+app.get('/admin.js', (req, res) => res.sendFile(path.join(__dirname, 'admin.js')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
