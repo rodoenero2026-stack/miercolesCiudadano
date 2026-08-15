@@ -828,3 +828,82 @@ app.delete('/api/fechas-bloqueadas/:id', authenticateToken, async (req, res) => 
     return res.status(500).json({ error: 'Error interno del servidor al desbloquear la fecha.' });
   }
 });
+
+// --- ENDPOINTS PARA GESTIÓN DE ADMINISTRADORES ---
+
+// 1. GET /api/admins: Obtener lista de administradores (Protegido con Token JWT)
+app.get('/api/admins', authenticateToken, async (req, res) => {
+  try {
+    const admins = await db.all('SELECT id, usuario FROM administradores ORDER BY id ASC');
+    return res.json(admins);
+  } catch (error) {
+    console.error('Error al obtener lista de administradores:', error);
+    return res.status(500).json({ error: 'Error al consultar administradores.' });
+  }
+});
+
+// 2. POST /api/admins: Crear un nuevo administrador (Protegido con Token JWT)
+app.post('/api/admins', authenticateToken, async (req, res) => {
+  const { usuario, password } = req.body;
+
+  if (!usuario || !password) {
+    return res.status(400).json({ error: 'El nombre de usuario y la contraseña son obligatorios.' });
+  }
+
+  const cleanUsuario = usuario.trim();
+  if (cleanUsuario.length < 3) {
+    return res.status(400).json({ error: 'El nombre de usuario debe tener al menos 3 caracteres.' });
+  }
+
+  if (password.length < 5) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 5 caracteres.' });
+  }
+
+  try {
+    const existing = await db.get('SELECT * FROM administradores WHERE usuario = ?', [cleanUsuario]);
+    if (existing) {
+      return res.status(400).json({ error: `El usuario "${cleanUsuario}" ya existe.` });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const result = await db.run(
+      'INSERT INTO administradores (usuario, password_hash) VALUES (?, ?)',
+      [cleanUsuario, hash]
+    );
+
+    return res.status(201).json({
+      message: `Administrador "${cleanUsuario}" creado con éxito.`,
+      data: { id: result.lastID, usuario: cleanUsuario }
+    });
+  } catch (error) {
+    console.error('Error al crear administrador:', error);
+    return res.status(500).json({ error: 'Error interno del servidor al crear administrador.' });
+  }
+});
+
+// 3. DELETE /api/admins/:id: Eliminar un administrador (Protegido con Token JWT)
+app.delete('/api/admins/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const count = await db.get('SELECT COUNT(*) as total FROM administradores');
+    if (count.total <= 1) {
+      return res.status(400).json({ error: 'No se puede eliminar el único administrador existente.' });
+    }
+
+    const target = await db.get('SELECT * FROM administradores WHERE id = ?', [id]);
+    if (!target) {
+      return res.status(404).json({ error: 'El administrador especificado no existe.' });
+    }
+
+    if (req.admin && req.admin.id === parseInt(id)) {
+      return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta activa de usuario.' });
+    }
+
+    await db.run('DELETE FROM administradores WHERE id = ?', [id]);
+    return res.json({ message: `Administrador "${target.usuario}" eliminado con éxito.` });
+  } catch (error) {
+    console.error('Error al eliminar administrador:', error);
+    return res.status(500).json({ error: 'Error interno del servidor al eliminar administrador.' });
+  }
+});

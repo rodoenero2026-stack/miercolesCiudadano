@@ -338,6 +338,7 @@
         if (tabId === 'listTab') return btn.textContent.includes('Listado');
         if (tabId === 'statsTab') return btn.textContent.includes('Estadísticas');
         if (tabId === 'blockedTab') return btn.textContent.includes('Fechas');
+        if (tabId === 'adminsTab') return btn.textContent.includes('Admins');
         return false;
       });
       
@@ -364,6 +365,8 @@
         updateStats();
       } else if (activePanel.id === 'blockedTab') {
         loadBlockedDates();
+      } else if (activePanel.id === 'adminsTab') {
+        loadAdmins();
       }
     }
 
@@ -1220,6 +1223,120 @@
 
         showAlert('Fecha Desbloqueada', `La fecha ${formatShortDate(fecha)} ha sido desbloqueada.`, 'success');
         await loadBlockedDates();
+      } catch (error) {
+        showAlert('Error al Eliminar', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // --- LÓGICA DE GESTIÓN DE ADMINISTRADORES ---
+    let allAdmins = [];
+
+    // Cargar y mostrar la lista de administradores
+    async function loadAdmins() {
+      const tableBody = document.getElementById('adminsTableBody');
+      if (!tableBody) return;
+      tableBody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Cargando administradores...</td></tr>";
+
+      try {
+        const response = await fetchWithAuth('/api/admins');
+        if (!response.ok) {
+          throw new Error('Error al obtener la lista de administradores.');
+        }
+
+        allAdmins = await response.json();
+        tableBody.innerHTML = "";
+
+        if (allAdmins.length === 0) {
+          tableBody.innerHTML = "<tr><td colspan='3' style='text-align:center; color: var(--text-muted); font-style: italic;'>No hay administradores registrados.</td></tr>";
+          return;
+        }
+
+        allAdmins.forEach(item => {
+          const row = document.createElement('tr');
+
+          row.innerHTML = `
+            <td>#${item.id}</td>
+            <td><strong>${escapeHtml(item.usuario)}</strong></td>
+            <td style="text-align: center;">
+              <button onclick="deleteAdminUser(${item.id}, '${escapeHtml(item.usuario)}')" class="btn btn-sm btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                Eliminar
+              </button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error(error);
+        tableBody.innerHTML = `<tr><td colspan='3' style='text-align:center; color:var(--error);'>Error: ${error.message}</td></tr>`;
+      }
+    }
+
+    // Crear un nuevo administrador
+    async function handleCreateAdmin(event) {
+      event.preventDefault();
+      
+      const userVal = document.getElementById('newAdminUser').value.trim();
+      const passVal = document.getElementById('newAdminPassword').value;
+
+      if (!userVal || !passVal) {
+        showAlert('Datos incompletos', 'Por favor proporciona usuario y contraseña.', 'warning');
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        const response = await fetchWithAuth('/api/admins', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            usuario: userVal,
+            password: passVal
+          })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al registrar administrador.');
+        }
+
+        showAlert('Administrador Creado', `El usuario "${userVal}" ha sido registrado correctamente.`, 'success');
+        document.getElementById('newAdminForm').reset();
+        
+        await loadAdmins();
+      } catch (error) {
+        showAlert('Error de Registro', error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // Eliminar cuenta de administrador
+    async function deleteAdminUser(id, usuario) {
+      if (!confirm(`¿Está seguro de que desea eliminar la cuenta del administrador "${usuario}"?`)) {
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        const response = await fetchWithAuth(`/api/admins/${id}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al eliminar administrador.');
+        }
+
+        showAlert('Administrador Eliminado', `El usuario "${usuario}" ha sido eliminado.`, 'success');
+        await loadAdmins();
       } catch (error) {
         showAlert('Error al Eliminar', error.message, 'error');
       } finally {

@@ -132,6 +132,10 @@
           <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
           Fechas Bloqueadas
         </button>
+        <button class="tab-btn" onclick="switchTab('adminsTab')">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          Gestión de Admins
+        </button>
       </div>
     </nav>
 
@@ -391,6 +395,49 @@
                 </tr>
               </thead>
               <tbody id="blockedDatesTableBody">
+                <!-- Se poblará dinámicamente con JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: GESTIÓN DE ADMINISTRADORES -->
+      <section id="adminsTab" class="tab-panel">
+        <div style="background-color: var(--bg-white); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; color: var(--primary-dark);">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="color: var(--primary);">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            Gestión de Usuarios Administradores
+          </h2>
+          
+          <form id="newAdminForm" onsubmit="handleCreateAdmin(event)" style="background-color: var(--bg-gold-light); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(185, 147, 38, 0.2); margin-bottom: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+            <div class="filter-group" style="margin-bottom: 0;">
+              <label for="newAdminUser" style="font-weight: 600; margin-bottom: 0.25rem; display: block; font-size: 0.85rem; color: var(--primary-dark);">Nombre de Usuario</label>
+              <input type="text" id="newAdminUser" class="filter-control" placeholder="Ej. juan" required style="width: 100%; height: 38px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); padding: 0.5rem; font-family: inherit;">
+            </div>
+            <div class="filter-group" style="margin-bottom: 0;">
+              <label for="newAdminPassword" style="font-weight: 600; margin-bottom: 0.25rem; display: block; font-size: 0.85rem; color: var(--primary-dark);">Contraseña</label>
+              <input type="password" id="newAdminPassword" class="filter-control" placeholder="Contraseña de acceso" required style="width: 100%; height: 38px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); padding: 0.5rem; font-family: inherit;">
+            </div>
+            <div class="filter-group" style="margin-bottom: 0;">
+              <button type="submit" class="btn btn-primary" style="width: 100%; height: 38px; justify-content: center; font-family: inherit;">
+                ➕ Registrar Administrador
+              </button>
+            </div>
+          </form>
+
+          <div class="table-container" style="box-shadow: none; border: 1px solid var(--border-color); margin-top: 1rem;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">ID</th>
+                  <th>Nombre de Usuario</th>
+                  <th style="text-align: center; width: 140px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="adminsTableBody">
                 <!-- Se poblará dinámicamente con JavaScript -->
               </tbody>
             </table>
