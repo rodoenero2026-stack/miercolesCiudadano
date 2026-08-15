@@ -842,8 +842,16 @@ app.get('/api/admins', authenticateToken, async (req, res) => {
   }
 });
 
-// 2. POST /api/admins: Crear un nuevo administrador (Protegido con Token JWT)
+// 2. POST /api/admins: Crear un nuevo administrador (Solo permitido para Superadmin)
 app.post('/api/admins', authenticateToken, async (req, res) => {
+  const callerUser = req.admin && req.admin.usuario ? req.admin.usuario.toLowerCase() : '';
+  const callerId = req.admin ? req.admin.id : 0;
+  const isSuperadmin = (callerUser === 'superadmin' || callerId === 1);
+
+  if (!isSuperadmin) {
+    return res.status(403).json({ error: 'Acceso denegado. Solo el Superadministrador puede crear nuevos administradores.' });
+  }
+
   const { usuario, password } = req.body;
 
   if (!usuario || !password) {
@@ -881,8 +889,16 @@ app.post('/api/admins', authenticateToken, async (req, res) => {
   }
 });
 
-// 3. DELETE /api/admins/:id: Eliminar un administrador (Protegido con Token JWT)
+// 3. DELETE /api/admins/:id: Eliminar un administrador (Solo permitido para Superadmin)
 app.delete('/api/admins/:id', authenticateToken, async (req, res) => {
+  const callerUser = req.admin && req.admin.usuario ? req.admin.usuario.toLowerCase() : '';
+  const callerId = req.admin ? req.admin.id : 0;
+  const isSuperadmin = (callerUser === 'superadmin' || callerId === 1);
+
+  if (!isSuperadmin) {
+    return res.status(403).json({ error: 'Acceso denegado. Solo el Superadministrador puede eliminar administradores.' });
+  }
+
   const { id } = req.params;
 
   try {
@@ -894,6 +910,10 @@ app.delete('/api/admins/:id', authenticateToken, async (req, res) => {
     const target = await db.get('SELECT * FROM administradores WHERE id = ?', [id]);
     if (!target) {
       return res.status(404).json({ error: 'El administrador especificado no existe.' });
+    }
+
+    if (target.id === 1 || target.usuario.toLowerCase() === 'superadmin') {
+      return res.status(403).json({ error: 'Protección de Seguridad: La cuenta principal de Superadministrador está protegida y no puede ser eliminada.' });
     }
 
     if (req.admin && req.admin.id === parseInt(id)) {

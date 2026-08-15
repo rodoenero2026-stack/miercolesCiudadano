@@ -1255,15 +1255,15 @@
 
         allAdmins.forEach(item => {
           const row = document.createElement('tr');
+          const isSuper = (item.id === 1 || item.usuario.toLowerCase() === 'superadmin');
+          const actionCell = isSuper 
+            ? `<span class="badge badge-confirmada" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">Protegido (Superadmin)</span>`
+            : `<button onclick="deleteAdminUser(${item.id}, '${escapeHtml(item.usuario)}')" class="btn btn-sm btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Eliminar</button>`;
 
           row.innerHTML = `
             <td>#${item.id}</td>
-            <td><strong>${escapeHtml(item.usuario)}</strong></td>
-            <td style="text-align: center;">
-              <button onclick="deleteAdminUser(${item.id}, '${escapeHtml(item.usuario)}')" class="btn btn-sm btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
-                Eliminar
-              </button>
-            </td>
+            <td><strong>${escapeHtml(item.usuario)}</strong> ${isSuper ? '<span style="font-size:0.75rem; color:var(--primary); font-weight:700; margin-left:0.25rem;">(Superadmin)</span>' : ''}</td>
+            <td style="text-align: center;">${actionCell}</td>
           `;
           tableBody.appendChild(row);
         });
