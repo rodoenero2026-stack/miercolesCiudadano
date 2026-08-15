@@ -10,9 +10,16 @@ const { initDatabase } = require('./database');
 const { sendConfirmationEmail, sendReminderEmail, sendStatusUpdateEmail, sendRescheduleEmail } = require('./emailService');
 
 const app = express();
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_miercoles_ciudadano';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!JWT_SECRET) {
+  console.error('FATAL: La variable de entorno JWT_SECRET no está definida.');
+  process.exit(1);
+}
 
 // Configuración de Rate Limit público (10 peticiones por IP cada 15 minutos)
 const publicApiLimiter = rateLimit({
@@ -54,8 +61,12 @@ app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'img', 'logo.webp'));
 });
 
-// Servir la interfaz web estáticamente
-app.use(express.static(path.join(__dirname)));
+// Servir únicamente los archivos estáticos requeridos de forma individual
+app.use('/img', express.static(path.join(__dirname, 'img')));
+app.get('/styles.css', (req, res) => res.sendFile(path.join(__dirname, 'styles.css')));
+app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // Variable de base de datos global
 let db;
@@ -143,20 +154,17 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     return res.status(400).json({ error: 'La contraseña es requerida.' });
   }
 
-  // Si se proporciona usuario, validar que sea 'admin'
-  if (username && username.trim().toLowerCase() !== 'admin') {
-    return res.status(401).json({ error: 'Usuario incorrecto. El administrador debe ser "admin".' });
-  }
+  const targetUsername = (username && username.trim()) ? username.trim() : 'admin';
 
   try {
-    const adminUser = await db.get('SELECT * FROM administradores WHERE usuario = ?', ['admin']);
+    const adminUser = await db.get('SELECT * FROM administradores WHERE usuario = ?', [targetUsername]);
     if (!adminUser) {
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
     }
 
     const match = await bcrypt.compare(password, adminUser.password_hash);
     if (match) {
-      const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
+      const token = jwt.sign({ id: adminUser.id, usuario: adminUser.usuario, role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
       return res.json({ success: true, token });
     } else {
       return res.status(401).json({ error: 'Contraseña incorrecta.' });
@@ -180,7 +188,11 @@ app.put('/api/admin/cambiar-password', authenticateToken, async (req, res) => {
   }
 
   try {
-    const adminUser = await db.get('SELECT * FROM administradores WHERE usuario = ?', ['admin']);
+    const userId = req.admin?.id;
+    const adminUser = userId 
+      ? await db.get('SELECT * FROM administradores WHERE id = ?', [userId])
+      : await db.get('SELECT * FROM administradores WHERE usuario = ?', ['admin']);
+
     if (!adminUser) {
       return res.status(404).json({ error: 'Cuenta de administrador no encontrada.' });
     }
@@ -191,7 +203,7 @@ app.put('/api/admin/cambiar-password', authenticateToken, async (req, res) => {
     }
 
     const newHash = await bcrypt.hash(newPassword, 10);
-    await db.run('UPDATE administradores SET password_hash = ? WHERE usuario = ?', [newHash, 'admin']);
+    await db.run('UPDATE administradores SET password_hash = ? WHERE id = ?', [newHash, adminUser.id]);
 
     return res.json({ success: true, message: 'La contraseña de administración ha sido actualizada correctamente.' });
   } catch (error) {

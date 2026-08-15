@@ -607,7 +607,7 @@
 
     <div class="footer-bottom">
       <p>&copy; 2026 H. Ayuntamiento de San Fernando, Chiapas. Todos los derechos reservados.</p>
-      <p>Desarrollado con fines de Transparencia y Atención Ciudadana</p>
+      <p>Desarrollado con fines de Atención Ciudadana</p>
             <p>Desarrollado by Rodo</p>
 
     </div>
@@ -615,6 +615,19 @@
 
   <!-- LÓGICA DE PROGRAMACIÓN (JAVASCRIPT) -->
   <script>
+    // --- FUNCIÓN DE SEGURIDAD PARA PREVENCIÓN DE XSS ---
+    function escapeHtml(text) {
+      if (!text) return "";
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
     // --- ESTADO GLOBAL DE LA APLICACIÓN ---
     let currentStep = 1;
     let selectedDate = "";
@@ -1313,13 +1326,13 @@
           else if (app.estado === "cancelada") statusClass = "status-cancelada";
 
           row.innerHTML = `
-            <td><strong style="color: var(--secondary-dark); font-size: 0.8rem;">${app.folio}</strong></td>
-            <td><strong>${app.nombre}</strong></td>
-            <td>${app.telefono}</td>
-            <td>${formatShortDate(app.fecha)}</td>
-            <td><span style="font-weight:600;">${app.hora.split(" - ")[0]}</span></td>
-            <td>${app.colonia}</td>
-            <td><span class="reason-pill ${reasonClass}">${app.motivo}</span></td>
+            <td><strong style="color: var(--secondary-dark); font-size: 0.8rem;">${escapeHtml(app.folio)}</strong></td>
+            <td><strong>${escapeHtml(app.nombre)}</strong></td>
+            <td>${escapeHtml(app.telefono)}</td>
+            <td>${escapeHtml(formatShortDate(app.fecha))}</td>
+            <td><span style="font-weight:600;">${escapeHtml(app.hora.split(" - ")[0])}</span></td>
+            <td>${escapeHtml(app.colonia)}</td>
+            <td><span class="reason-pill ${reasonClass}">${escapeHtml(app.motivo)}</span></td>
             <td style="text-align: center;">
               <div class="table-actions" style="justify-content: center; gap: 0.3rem;">
                 <select class="status-select ${statusClass}" onchange="openStatusModal(${app.id}, this.value)" style="border-radius: var(--radius-sm); border: 1px solid var(--border-color); padding: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; outline: none;">
@@ -1327,7 +1340,7 @@
                   <option value="confirmada" ${app.estado === 'confirmada' ? 'selected' : ''}>Confirmada</option>
                   <option value="cancelada" ${app.estado === 'cancelada' ? 'selected' : ''}>Cancelada</option>
                 </select>
-                <button class="btn-icon btn-icon-delete" title="Cancelar Cita" onclick="deleteAppointment(${app.id}, '${app.folio}')">
+                <button class="btn-icon btn-icon-delete" title="Cancelar Cita" onclick="deleteAppointment(${app.id}, '${escapeHtml(app.folio)}')">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                 </button>
               </div>
