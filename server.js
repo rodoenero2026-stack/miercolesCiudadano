@@ -199,7 +199,7 @@ app.put('/api/admin/cambiar-password', authenticateToken, async (req, res) => {
 
     const match = await bcrypt.compare(currentPassword, adminUser.password_hash);
     if (!match) {
-      return res.status(401).json({ error: 'La contraseña actual ingresada es incorrecta.' });
+      return res.status(400).json({ error: 'La contraseña actual ingresada es incorrecta.' });
     }
 
     const newHash = await bcrypt.hash(newPassword, 10);
