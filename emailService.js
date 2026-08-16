@@ -3,11 +3,11 @@ const nodemailer = require('nodemailer');
 
 /**
  * Obtener un transportador SMTP configurado dinámicamente
+ * @param {number} port Puerto SMTP (587 o 465)
+ * @param {boolean} secure True para SSL (465), False para STARTTLS (587)
  */
-function getTransporter() {
+function getTransporter(port = 587, secure = false) {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.SMTP_PORT || '465', 10);
-  const secure = (process.env.SMTP_PORT || '465') === '465';
   
   // Limpiar credenciales y eliminar espacios en blanco de las contraseñas de aplicación de Google
   const user = process.env.SMTP_USER ? process.env.SMTP_USER.trim() : '';
@@ -18,9 +18,12 @@ function getTransporter() {
     port,
     secure,
     auth: { user, pass },
-    connectionTimeout: 10000, // 10 segundos de timeout de conexión
-    greetingTimeout: 10000,
-    socketTimeout: 10000
+    connectionTimeout: 30000, // 30 segundos de timeout de conexión
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+    tls: {
+      rejectUnauthorized: false // Evitar bloqueos por inspección SSL o proxies de red gubernamentales
+    }
   });
 }
 
@@ -164,7 +167,7 @@ function getHtmlTemplate(title, content) {
   `;
 }
 
-// Envío general de correo con fallback
+// Envío general de correo con fallback de puerto y reintentos (587 -> 465)
 async function sendMail(to, subject, html) {
   if (!to || typeof to !== 'string' || !to.trim()) {
     console.error('⚠️ ERROR: La dirección de correo destinatario no es válida.');
@@ -184,21 +187,36 @@ async function sendMail(to, subject, html) {
     return { simulated: true };
   }
 
-  try {
-    const transporter = getTransporter();
-    const fromAddress = process.env.SMTP_FROM || `"Miércoles Ciudadano San Fernando" <${smtpUser}>`;
-    const info = await transporter.sendMail({
-      from: fromAddress,
-      to: to.trim(),
-      subject,
-      html
-    });
-    console.log(`Correo enviado con éxito a: ${to.trim()}. ID: ${info.messageId}`);
-    return info;
-  } catch (error) {
-    console.error('Error al enviar correo electrónico:', error);
-    throw error;
+  const fromAddress = process.env.SMTP_FROM || `"Miércoles Ciudadano San Fernando" <${smtpUser}>`;
+
+  // Determinar orden de prueba de puertos (587 TLS primero, luego 465 SSL o viceversa según configuración)
+  const preferredPort = parseInt(process.env.SMTP_PORT || '587', 10);
+  const portsToTry = preferredPort === 465 
+    ? [{ port: 465, secure: true }, { port: 587, secure: false }]
+    : [{ port: 587, secure: false }, { port: 465, secure: true }];
+
+  let lastError = null;
+
+  for (const config of portsToTry) {
+    try {
+      console.log(`Intentando enviar correo a ${to.trim()} mediante puerto ${config.port} (secure: ${config.secure})...`);
+      const transporter = getTransporter(config.port, config.secure);
+      const info = await transporter.sendMail({
+        from: fromAddress,
+        to: to.trim(),
+        subject,
+        html
+      });
+      console.log(`Correo enviado con éxito a: ${to.trim()} por puerto ${config.port}. ID: ${info.messageId}`);
+      return info;
+    } catch (error) {
+      console.warn(`⚠️ Fallo de envío por puerto ${config.port} (${error.code || error.message}). Intentando siguiente alternativa...`);
+      lastError = error;
+    }
   }
+
+  console.error('Error al enviar correo en todos los puertos intentados (587 y 465):', lastError);
+  throw lastError;
 }
 
 // 1. Correo de Confirmación de Cita
