@@ -167,20 +167,27 @@ function getHtmlTemplate(title, content) {
   `;
 }
 
-// Envío general de correo con fallback de puerto y reintentos (587 -> 465)
+// Envío general de correo con soporte para Brevo HTTP API (Puerto 443) y SMTP con fallback
 async function sendMail(to, subject, html) {
   if (!to || typeof to !== 'string' || !to.trim()) {
     console.error('⚠️ ERROR: La dirección de correo destinatario no es válida.');
     throw new Error('La dirección de correo electrónico del destinatario es obligatoria.');
   }
 
+  // 1. Si está configurada la API Key de Brevo, enviar mediante HTTP API (Puerto 443 - NUNCA bloqueado)
+  const brevoKey = process.env.BREVO_API_KEY ? process.env.BREVO_API_KEY.trim() : '';
+  if (brevoKey) {
+    return await sendViaBrevo(to, subject, html, brevoKey);
+  }
+
+  // 2. Si no hay Brevo API Key, intentar por SMTP habitual
   const smtpUser = process.env.SMTP_USER ? process.env.SMTP_USER.trim() : '';
   const smtpPass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : '';
 
   // Verificar si las credenciales de correo electrónico están configuradas
   if (!smtpUser || !smtpPass) {
     console.log('\n==================================================');
-    console.log('⚠️ AVISO: Las credenciales de correo (SMTP_USER / SMTP_PASS) no están configuradas.');
+    console.log('⚠️ AVISO: Ninguna credencial de correo (BREVO_API_KEY o SMTP_USER / SMTP_PASS) está configurada.');
     console.log(`Simulación de Envío de Correo a: ${to}`);
     console.log(`Asunto: ${subject}`);
     console.log('==================================================\n');
@@ -217,6 +224,50 @@ async function sendMail(to, subject, html) {
 
   console.error('Error al enviar correo en todos los puertos intentados (587 y 465):', lastError);
   throw lastError;
+}
+
+// Función auxiliar para enviar correos usando la API HTTP v3 de Brevo (Puerto 443 HTTPS)
+async function sendViaBrevo(to, subject, html, apiKey) {
+  const senderEmail = process.env.SMTP_USER || process.env.BREVO_SENDER_EMAIL || 'miercolesciudadano7@gmail.com';
+  const senderName = process.env.BREVO_SENDER_NAME || 'Miércoles Ciudadano San Fernando';
+
+  try {
+    console.log(`Enviando correo a ${to.trim()} mediante Brevo HTTP API (Puerto 443 HTTPS)...`);
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: {
+          name: senderName,
+          email: senderEmail.trim()
+        },
+        to: [
+          {
+            email: to.trim()
+          }
+        ],
+        subject,
+        htmlContent: html
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Error desde la API HTTP de Brevo:', data);
+      throw new Error(data.message || data.error || 'Error al enviar correo vía Brevo API');
+    }
+
+    console.log(`Correo enviado con éxito vía Brevo HTTP API a: ${to.trim()}. Message ID: ${data.messageId || 'ok'}`);
+    return data;
+  } catch (error) {
+    console.error('Error al enviar correo vía Brevo HTTP API:', error);
+    throw error;
+  }
 }
 
 // 1. Correo de Confirmación de Cita
