@@ -1,16 +1,28 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
 
-// Configuración del transportador de correo
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '465'),
-  secure: process.env.SMTP_PORT === '465' || !process.env.SMTP_PORT, // true para 465, false para otros
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
-});
+/**
+ * Obtener un transportador SMTP configurado dinámicamente
+ */
+function getTransporter() {
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.SMTP_PORT || '465', 10);
+  const secure = (process.env.SMTP_PORT || '465') === '465';
+  
+  // Limpiar credenciales y eliminar espacios en blanco de las contraseñas de aplicación de Google
+  const user = process.env.SMTP_USER ? process.env.SMTP_USER.trim() : '';
+  const pass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : '';
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass },
+    connectionTimeout: 10000, // 10 segundos de timeout de conexión
+    greetingTimeout: 10000,
+    socketTimeout: 10000
+  });
+}
 
 // Estilos de diseño (Verde y Dorado de Chiapas)
 const primaryColor = '#0F4C3A';
@@ -154,8 +166,16 @@ function getHtmlTemplate(title, content) {
 
 // Envío general de correo con fallback
 async function sendMail(to, subject, html) {
+  if (!to || typeof to !== 'string' || !to.trim()) {
+    console.error('⚠️ ERROR: La dirección de correo destinatario no es válida.');
+    throw new Error('La dirección de correo electrónico del destinatario es obligatoria.');
+  }
+
+  const smtpUser = process.env.SMTP_USER ? process.env.SMTP_USER.trim() : '';
+  const smtpPass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : '';
+
   // Verificar si las credenciales de correo electrónico están configuradas
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!smtpUser || !smtpPass) {
     console.log('\n==================================================');
     console.log('⚠️ AVISO: Las credenciales de correo (SMTP_USER / SMTP_PASS) no están configuradas.');
     console.log(`Simulación de Envío de Correo a: ${to}`);
@@ -165,13 +185,15 @@ async function sendMail(to, subject, html) {
   }
 
   try {
+    const transporter = getTransporter();
+    const fromAddress = process.env.SMTP_FROM || `"Miércoles Ciudadano San Fernando" <${smtpUser}>`;
     const info = await transporter.sendMail({
-      from: `"Miércoles Ciudadano San Fernando" <${process.env.SMTP_USER}>`,
-      to,
+      from: fromAddress,
+      to: to.trim(),
       subject,
       html
     });
-    console.log(`Correo enviado con éxito a: ${to}. ID: ${info.messageId}`);
+    console.log(`Correo enviado con éxito a: ${to.trim()}. ID: ${info.messageId}`);
     return info;
   } catch (error) {
     console.error('Error al enviar correo electrónico:', error);
@@ -324,8 +346,22 @@ async function sendRescheduleEmail(citizen, appointment) {
 
 // Función auxiliar para formatear la fecha en texto legible en el correo
 function formatDateText(dateString) {
+  if (!dateString || typeof dateString !== 'string') {
+    return 'Fecha no especificada';
+  }
   const parts = dateString.split("-");
-  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (parts.length !== 3) {
+    return dateString;
+  }
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    return dateString;
+  }
+
+  const d = new Date(year, month, day);
   
   const meses = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",

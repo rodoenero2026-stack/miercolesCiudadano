@@ -157,10 +157,14 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     return res.status(400).json({ error: 'La contraseña es requerida.' });
   }
 
-  const targetUsername = (username && username.trim()) ? username.trim() : 'admin';
+  const targetUsername = (username && username.trim()) ? username.trim() : '';
+
+  if (!targetUsername) {
+    return res.status(400).json({ error: 'El nombre de usuario es requerido.' });
+  }
 
   try {
-    const adminUser = await db.get('SELECT * FROM administradores WHERE usuario = ?', [targetUsername]);
+    const adminUser = await db.get('SELECT * FROM administradores WHERE LOWER(usuario) = LOWER(?)', [targetUsername]);
     if (!adminUser) {
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
     }
@@ -735,14 +739,24 @@ app.post('/api/citas/:id/reenviar-correo', authenticateToken, async (req, res) =
       return res.status(404).json({ error: 'La cita especificada no existe.' });
     }
 
+    if (!appointment.correo || !appointment.correo.trim()) {
+      return res.status(400).json({ error: 'El ciudadano no tiene una dirección de correo electrónico registrada.' });
+    }
+
     // Generar el Folio virtual
     const virtualFolio = 'SF-' + String(appointment.id).padStart(2, '0');
 
     // Enviar correo de confirmación de cita (síncrono aquí para responder con éxito/error)
-    await sendConfirmationEmail(
+    const emailResult = await sendConfirmationEmail(
       { nombre: appointment.nombre, correo: appointment.correo },
       { folio: virtualFolio, fecha: appointment.fecha, hora: appointment.hora, motivo: appointment.motivo }
     );
+
+    if (emailResult && emailResult.simulated) {
+      return res.status(400).json({
+        error: 'No se pudo enviar el correo: Las credenciales SMTP (SMTP_USER y SMTP_PASS) no están configuradas en las variables de entorno del servidor de producción.'
+      });
+    }
 
     return res.json({
       success: true,
@@ -750,7 +764,7 @@ app.post('/api/citas/:id/reenviar-correo', authenticateToken, async (req, res) =
     });
   } catch (error) {
     console.error('Error al reenviar correo de confirmación:', error);
-    return res.status(500).json({ error: 'Error interno del servidor al reenviar el correo.' });
+    return res.status(500).json({ error: error.message || 'Error interno del servidor al reenviar el correo.' });
   }
 });
 
@@ -846,7 +860,7 @@ app.get('/api/admins', authenticateToken, async (req, res) => {
 app.post('/api/admins', authenticateToken, async (req, res) => {
   const callerUser = req.admin && req.admin.usuario ? req.admin.usuario.toLowerCase() : '';
   const callerId = req.admin ? req.admin.id : 0;
-  const isSuperadmin = (callerUser === 'superadmin' || callerId === 1);
+  const isSuperadmin = (callerUser === 'superadmin' || callerUser === 'admin' || callerId === 1);
 
   if (!isSuperadmin) {
     return res.status(403).json({ error: 'Acceso denegado. Solo el Superadministrador puede crear nuevos administradores.' });
@@ -868,7 +882,7 @@ app.post('/api/admins', authenticateToken, async (req, res) => {
   }
 
   try {
-    const existing = await db.get('SELECT * FROM administradores WHERE usuario = ?', [cleanUsuario]);
+    const existing = await db.get('SELECT * FROM administradores WHERE LOWER(usuario) = LOWER(?)', [cleanUsuario]);
     if (existing) {
       return res.status(400).json({ error: `El usuario "${cleanUsuario}" ya existe.` });
     }
@@ -893,7 +907,7 @@ app.post('/api/admins', authenticateToken, async (req, res) => {
 app.delete('/api/admins/:id', authenticateToken, async (req, res) => {
   const callerUser = req.admin && req.admin.usuario ? req.admin.usuario.toLowerCase() : '';
   const callerId = req.admin ? req.admin.id : 0;
-  const isSuperadmin = (callerUser === 'superadmin' || callerId === 1);
+  const isSuperadmin = (callerUser === 'superadmin' || callerUser === 'admin' || callerId === 1);
 
   if (!isSuperadmin) {
     return res.status(403).json({ error: 'Acceso denegado. Solo el Superadministrador puede eliminar administradores.' });
@@ -912,7 +926,7 @@ app.delete('/api/admins/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'El administrador especificado no existe.' });
     }
 
-    if (target.id === 1 || target.usuario.toLowerCase() === 'superadmin') {
+    if (target.id === 1 || target.usuario.toLowerCase() === 'superadmin' || target.usuario.toLowerCase() === 'admin') {
       return res.status(403).json({ error: 'Protección de Seguridad: La cuenta principal de Superadministrador está protegida y no puede ser eliminada.' });
     }
 

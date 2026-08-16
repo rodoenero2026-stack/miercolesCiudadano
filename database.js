@@ -60,13 +60,13 @@ async function initDatabase() {
     )
   `);
 
-  // Insertar administrador por defecto si no hay ninguno
-  const adminExists = await db.get('SELECT * FROM administradores WHERE usuario = ?', ['admin']);
-  if (!adminExists) {
+  // Insertar administrador por defecto sólo si la tabla está completamente vacía
+  const adminCount = await db.get('SELECT COUNT(*) as total FROM administradores');
+  if (adminCount.total === 0) {
     const defaultPassword = process.env.ADMIN_PASSWORD || 'admin123';
     const hash = await bcrypt.hash(defaultPassword, 10);
-    await db.run('INSERT INTO administradores (usuario, password_hash) VALUES (?, ?)', ['admin', hash]);
-    console.log('Administrador por defecto registrado en base de datos.');
+    await db.run('INSERT INTO administradores (usuario, password_hash) VALUES (?, ?)', ['superadmin', hash]);
+    console.log('Administrador inicial ("superadmin") registrado en la base de datos.');
   }
 
   console.log('Base de datos SQLite inicializada y tablas creadas.');
