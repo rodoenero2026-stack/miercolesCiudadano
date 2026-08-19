@@ -549,37 +549,37 @@
     </div>
   </div>
 
-  <!-- SCRIPTING PRINCIPAL -->
-  <script src="admin.js"></script>
-
   <!-- MODAL: CAMBIAR CONTRASEÑA DE ADMINISTRADOR -->
-  <div id="changePasswordModal" class="modal">
-    <div class="modal-content" style="max-width: 450px;">
+  <div id="changePasswordModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 480px;">
       <div class="modal-header">
-        <h3>🔑 Cambiar Contraseña de Administración</h3>
-        <button onclick="closeModal('changePasswordModal')" class="close-btn">&times;</button>
+        <h3>🔑 Cambiar Contraseña</h3>
+        <button type="button" onclick="closeModal('changePasswordModal')" class="modal-close-btn">&times;</button>
       </div>
       <form id="changePasswordForm" onsubmit="changeAdminPassword(event)">
-        <div class="modal-body" style="padding: 1.5rem;">
-          <div class="form-group" style="margin-bottom: 1.2rem;">
+        <div class="modal-body">
+          <div class="form-group">
             <label for="currentPasswordInput">Contraseña Actual *</label>
-            <input type="password" id="currentPasswordInput" required style="width: 100%; padding: 0.7rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm);" placeholder="Ingresa tu contraseña actual">
+            <input type="password" id="currentPasswordInput" class="filter-control" required placeholder="Ingresa tu contraseña actual" autocomplete="current-password">
           </div>
-          <div class="form-group" style="margin-bottom: 1.2rem;">
+          <div class="form-group">
             <label for="newPasswordInput">Nueva Contraseña (mínimo 6 caracteres) *</label>
-            <input type="password" id="newPasswordInput" required minlength="6" style="width: 100%; padding: 0.7rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm);" placeholder="Ingresa tu nueva contraseña">
+            <input type="password" id="newPasswordInput" class="filter-control" required minlength="6" placeholder="Ingresa tu nueva contraseña" autocomplete="new-password">
           </div>
           <div class="form-group">
             <label for="confirmPasswordInput">Confirmar Nueva Contraseña *</label>
-            <input type="password" id="confirmPasswordInput" required minlength="6" style="width: 100%; padding: 0.7rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm);" placeholder="Repite tu nueva contraseña">
+            <input type="password" id="confirmPasswordInput" class="filter-control" required minlength="6" placeholder="Repite tu nueva contraseña" autocomplete="new-password">
           </div>
         </div>
-        <div class="modal-footer" style="padding: 1rem 1.5rem; background-color: var(--bg-body); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 0.5rem;">
-          <button type="button" onclick="closeModal('changePasswordModal')" class="btn btn-outline">Cancelar</button>
+        <div class="modal-footer">
+          <button type="button" onclick="closeModal('changePasswordModal')" class="btn btn-muted">Cancelar</button>
           <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
         </div>
       </form>
     </div>
   </div>
+
+  <!-- SCRIPTING PRINCIPAL -->
+  <script src="admin.js"></script>
 </body>
 </html>

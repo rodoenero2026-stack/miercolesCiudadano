@@ -19,33 +19,68 @@
       "14:00 - 14:20", "14:20 - 14:40", "14:40 - 15:00"
     ];
 
+    // Actualizar nombre y avatar del usuario en el encabezado
+    function updateUserDisplay(username) {
+      const userDisplay = document.getElementById('userDisplay');
+      const userAvatar = document.getElementById('userAvatar');
+      if (userDisplay && username) {
+        userDisplay.textContent = username;
+      }
+      if (userAvatar && username) {
+        userAvatar.textContent = username.charAt(0).toUpperCase();
+      }
+    }
+
     // Al iniciar la carga
     window.addEventListener('DOMContentLoaded', () => {
       // 1. Revisar si hay sesión guardada
       const savedToken = localStorage.getItem('adminToken');
+      const savedUser = localStorage.getItem('adminUser') || 'Administrador';
       if (savedToken) {
         apiToken = savedToken;
+        updateUserDisplay(savedUser);
         document.getElementById('loginView').style.display = 'none';
         document.getElementById('adminApp').style.display = 'flex';
         initAdminPanel();
       } else {
-        // Asegurarse de que el input de contraseña tenga focus
-        document.getElementById('passwordInput').focus();
+        // Asegurarse de que el input de usuario tenga focus
+        const userInput = document.getElementById('usernameInput');
+        if (userInput) userInput.focus();
       }
+
+      // Cerrar modales al hacer clic en el fondo oscuro (backdrop)
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.addEventListener('click', (e) => {
+          if (e.target === backdrop) {
+            closeModal(backdrop.id);
+          }
+        });
+      });
+
+      // Cerrar modales con tecla Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal-backdrop.show').forEach(m => {
+            closeModal(m.id);
+          });
+        }
+      });
 
       // Restricción del input de fecha de reagendamiento para ser solo miércoles
       const rescheduleDateInput = document.getElementById('rescheduleFecha');
-      rescheduleDateInput.addEventListener('input', (e) => {
-        const val = e.target.value;
-        if (!val) return;
-        
-        const parts = val.split('-');
-        const dateObj = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
-        if (dateObj.getUTCDay() !== 3) {
-          showAlert('Error de fecha', 'Las citas solo pueden programarse los días miércoles.', 'error');
-          e.target.value = '';
-        }
-      });
+      if (rescheduleDateInput) {
+        rescheduleDateInput.addEventListener('input', (e) => {
+          const val = e.target.value;
+          if (!val) return;
+          
+          const parts = val.split('-');
+          const dateObj = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+          if (dateObj.getUTCDay() !== 3) {
+            showAlert('Error de fecha', 'Las citas solo pueden programarse los días miércoles.', 'error');
+            e.target.value = '';
+          }
+        });
+      }
       
       // Restricción del input de fecha de bloqueo para ser solo miércoles
       const blockedDateInput = document.getElementById('blockedDateInput');
@@ -65,7 +100,9 @@
 
       // Estilos mínimos en mobile para fecha
       const today = new Date();
-      rescheduleDateInput.min = today.toISOString().split('T')[0];
+      if (rescheduleDateInput) {
+        rescheduleDateInput.min = today.toISOString().split('T')[0];
+      }
       if (blockedDateInput) {
         blockedDateInput.min = today.toISOString().split('T')[0];
       }
@@ -127,7 +164,7 @@
     // MANEJAR LOGIN
     async function handleLogin(event) {
       event.preventDefault();
-      const username = document.getElementById('usernameInput').value;
+      const username = document.getElementById('usernameInput').value.trim();
       const password = document.getElementById('passwordInput').value;
 
       showLoading(true);
@@ -148,6 +185,8 @@
 
         apiToken = data.token;
         localStorage.setItem('adminToken', apiToken);
+        localStorage.setItem('adminUser', username);
+        updateUserDisplay(username);
         
         document.getElementById('loginView').style.display = 'none';
         document.getElementById('adminApp').style.display = 'flex';
@@ -165,12 +204,20 @@
     function handleLogout() {
       apiToken = "";
       localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
       document.getElementById('adminApp').style.display = 'none';
       document.getElementById('loginView').style.display = 'flex';
       
       // Limpiar inputs
-      document.getElementById('passwordInput').value = '';
-      document.getElementById('passwordInput').focus();
+      const userInput = document.getElementById('usernameInput');
+      const passInput = document.getElementById('passwordInput');
+      if (userInput) {
+        userInput.value = '';
+        userInput.focus();
+      }
+      if (passInput) {
+        passInput.value = '';
+      }
       
       showAlert('Sesión Cerrada', 'Ha cerrado sesión correctamente.', 'info');
     }
@@ -1374,11 +1421,25 @@
 
     // --- AUXILIARES GENERALES ---
     function openModal(modalId) {
-      document.getElementById(modalId).classList.add('show');
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('show');
+        const firstInput = modal.querySelector('input:not([type="hidden"]), select, textarea');
+        if (firstInput) {
+          setTimeout(() => firstInput.focus(), 80);
+        }
+      }
     }
 
     function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('show');
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('show');
+        const form = modal.querySelector('form');
+        if (form) {
+          form.reset();
+        }
+      }
     }
 
     // Cambiar contraseña del administrador
@@ -1388,6 +1449,16 @@
       const currentPassword = document.getElementById('currentPasswordInput').value;
       const newPassword = document.getElementById('newPasswordInput').value;
       const confirmPassword = document.getElementById('confirmPasswordInput').value;
+
+      if (!currentPassword || !newPassword) {
+        showAlert('Error de Validación', 'Todos los campos son obligatorios.', 'warning');
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        showAlert('Error de Validación', 'La nueva contraseña debe constar de al menos 6 caracteres.', 'warning');
+        return;
+      }
 
       if (newPassword !== confirmPassword) {
         showAlert('Error de Validación', 'La nueva contraseña y la confirmación no coinciden.', 'warning');

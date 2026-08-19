@@ -597,7 +597,7 @@
         const response = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
+          body: JSON.stringify({ username: 'superadmin', password })
         });
 
         const data = await response.json();
